@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "movie-app",
-    "slug": "movie-app",
+    "name": "progressive-overload-app",
+    "slug": "progressive-overload-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "movieapp",
+    "scheme": "progressiveoverloadapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

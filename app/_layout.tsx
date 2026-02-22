@@ -1,24 +1,23 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import "./global.css"; // Global styles for the entire app
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
+/**
+ * Root layout component that provides the base navigation structure
+ * This component wraps all screens and handles the main navigation flow
+ * Includes SafeAreaProvider to enable SafeArea support throughout the app
+ * @returns JSX.Element - The root navigation stack with SafeArea support
+ */
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <Stack
+        screenOptions={{
+          // Hide header since we're using tabs as primary navigation
+          // This gives us a clean, full-screen experience
+          headerShown: false,
+        }}
+      />
+    </SafeAreaProvider>
   );
 }
