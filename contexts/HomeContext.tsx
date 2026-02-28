@@ -5,30 +5,21 @@
  * user data, and workout operations (add, delete, etc.)
  */
 
-import { useRouter } from "expo-router";
-import React, { createContext, ReactNode, useContext, useState } from "react";
-import { Alert } from "react-native";
-
-// Types
-export interface User {
-  username: string;
-  dailyStreak: number;
-}
-
-export interface HomeContextType {
-  // User data
-  user: User;
-
-  // Workouts state
-  workoutsList: string[];
-  newWorkoutName: string;
-
-  // Actions
-  setNewWorkoutName: (name: string) => void;
-  handleSaveNewWorkout: () => void;
-  handleDeleteWorkout: (workoutIndex: number, workoutName: string) => void;
-  navigateToWorkout: (workout: string) => void;
-}
+import { Workout } from "@/types/mappers/workout.mapper";
+import { Href, useRouter } from "expo-router";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import {
+  createWorkout,
+  deleteWorkout,
+  fetchWorkouts,
+} from "./home/home.repository";
+import { HomeContextType, User } from "./home/home.types";
 
 // Create the context
 const HomeContext = createContext<HomeContextType | undefined>(undefined);
@@ -42,59 +33,74 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   const router = useRouter();
 
   // User state (in real app, this would come from user authentication/profile)
-  const [user] = useState<User>({
+  const user: User = {
     username: "Marius",
     dailyStreak: 5,
-  });
+  };
 
   // Workouts state
-  const [workoutsList, setWorkoutsList] = useState<string[]>([]);
-  const [newWorkoutName, setNewWorkoutName] = useState("");
+  const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
 
-  // Actions
-  const handleSaveNewWorkout = () => {
-    if (newWorkoutName.trim() !== "") {
-      setWorkoutsList([...workoutsList, newWorkoutName.trim()]);
-      setNewWorkoutName("");
-    } else {
-      Alert.alert("Error", "Please enter a workout name.");
+  const loadWorkouts = async () => {
+    try {
+      const workouts = await fetchWorkouts();
+      setWorkoutsList(workouts);
+    } catch (error: any) {
+      console.error("Error fetching workouts:", error.message);
     }
   };
 
-  const handleDeleteWorkout = (workoutIndex: number, workoutName: string) => {
-    Alert.alert(
-      "Delete Workout",
-      `Are you sure you want to delete "${workoutName}"? This action cannot be undone.`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            setWorkoutsList(
-              workoutsList.filter((_, index) => index !== workoutIndex),
-            );
-          },
-        },
-      ],
-    );
+  useEffect(() => {
+    loadWorkouts();
+  }, []);
+
+  // Actions
+  const handleSaveNewWorkout = async (newWorkoutName: string) => {
+    const trimmedWorkoutName = newWorkoutName.trim();
+    if (!trimmedWorkoutName) {
+      return;
+    }
+
+    try {
+      const createdWorkout = await createWorkout(trimmedWorkoutName);
+      setWorkoutsList((prev) => [...prev, createdWorkout]);
+    } catch (error: any) {
+      console.error("Error creating workout:", error.message);
+      return;
+    }
   };
 
-  const navigateToWorkout = (workout: string) => {
-    router.push(`/workouts/${workout}` as any);
+  const handleDeleteWorkout = async (workout: Workout) => {
+    const { id, name } = workout;
+
+    // Optimistically update UI
+    setWorkoutsList((prev) => prev.filter((item) => item.id !== id));
+
+    // Delete from Supabase
+    try {
+      await deleteWorkout(id);
+      console.log(`Workout "${name}" deleted successfully.`);
+    } catch (error: any) {
+      console.error("Error deleting workout:", error.message);
+      await loadWorkouts();
+    }
+  };
+
+  const navigateToWorkout = (workout: Workout) => {
+    const workoutRoute: Href = {
+      pathname: "/workouts/[id]",
+      params: { id: String(workout.id) },
+    };
+
+    router.push(workoutRoute);
   };
 
   const value: HomeContextType = {
+    handleDeleteWorkout,
+    handleSaveNewWorkout,
+    navigateToWorkout,
     user,
     workoutsList,
-    newWorkoutName,
-    setNewWorkoutName,
-    handleSaveNewWorkout,
-    handleDeleteWorkout,
-    navigateToWorkout,
   };
 
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;

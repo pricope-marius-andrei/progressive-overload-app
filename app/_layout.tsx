@@ -6,6 +6,7 @@ import "./global.css"; // Global styles for the entire app
  * Root layout component that provides the base navigation structure
  * This component wraps all screens and handles the main navigation flow
  * Includes SafeAreaProvider to enable SafeArea support throughout the app
+ * Also verifies Supabase backend server connection on app startup
  * @returns JSX.Element - The root navigation stack with SafeArea support
  */
 export default function RootLayout() {

@@ -5,44 +5,28 @@
  * sets, and exercise operations (add, edit, delete)
  */
 
-import React, { createContext, ReactNode, useContext, useState } from "react";
+import {
+  ApiExercise,
+  Exercise,
+  ExerciseSet,
+} from "@/types/mappers/workout.mapper";
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { Alert } from "react-native";
-import { ApiExercise, Exercise, Set } from "../types/workout";
-
-export interface WorkoutContextType {
-  // Workout data
-  workoutId: string;
-  workoutExercises: Exercise[];
-
-  // Modal state
-  isModalVisible: boolean;
-  newExerciseName: string;
-  newExerciseSets: Set[];
-  editingExercise: Exercise | null;
-  isEditMode: boolean;
-
-  // Search state
-  searchQuery: string;
-  searchResults: ApiExercise[];
-  isSearching: boolean;
-  showCustomEntry: boolean;
-  selectedApiExercise: ApiExercise | null;
-
-  // Actions
-  setNewExerciseName: (name: string) => void;
-  setSearchQuery: (query: string) => void;
-  startCreatingExercise: () => void;
-  startEditingExercise: (exercise: Exercise) => void;
-  handleAddNewExercise: () => void;
-  cancelExerciseCreation: () => void;
-  addNewSet: () => void;
-  removeSet: (setId: string) => void;
-  updateSetReps: (setId: string, reps: number) => void;
-  updateSetWeight: (setId: string, weight: number) => void;
-  handleSearchExercises: (query: string) => void;
-  selectApiExercise: (exercise: ApiExercise) => void;
-  setShowCustomEntry: (show: boolean) => void;
-}
+import { searchExercises } from "./workout/exercise-search.service";
+import {
+  createExerciseWithSets,
+  deleteExerciseWithSets,
+  fetchWorkoutExercises,
+  updateExerciseWithSets,
+} from "./workout/workout.repository";
+import { WorkoutContextType } from "./workout/workout.types";
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 
@@ -61,7 +45,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   // Modal state
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newExerciseName, setNewExerciseName] = useState("");
-  const [newExerciseSets, setNewExerciseSets] = useState<Set[]>([]);
+  const [newExerciseSets, setNewExerciseSets] = useState<ExerciseSet[]>([]);
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -74,46 +58,26 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     useState<ApiExercise | null>(null);
 
   // Generate unique ID
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
+  const parsedWorkoutId = Number(workoutId);
 
-  // API Configuration
-  const API_BASE_URL =
-    "https://edb-with-videos-and-images-by-ascendapi.p.rapidapi.com/api/v1";
-  const API_HOST = "edb-with-videos-and-images-by-ascendapi.p.rapidapi.com";
-
-  // API Functions
-  const searchExercises = async (query: string): Promise<ApiExercise[]> => {
-    try {
-      // Validate API credentials
-      const rapidApiKey = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
-      if (!rapidApiKey) {
-        console.error(
-          "RapidAPI key is missing. Please set EXPO_PUBLIC_RAPIDAPI_KEY environment variable.",
-        );
-        return [];
-      }
-
-      const url = `${API_BASE_URL}/exercises/search?search=${encodeURIComponent(query)}`;
-      const options = {
-        method: "GET",
-        headers: {
-          "x-rapidapi-key": rapidApiKey,
-          "x-rapidapi-host": API_HOST,
-        },
-      };
-
-      const response = await fetch(url, options);
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        return result.data;
-      }
-      return [];
-    } catch (error) {
-      console.error("Error fetching exercises:", error);
-      return [];
+  const loadWorkoutExercises = useCallback(async () => {
+    if (!Number.isInteger(parsedWorkoutId)) {
+      setWorkoutExercises([]);
+      return;
     }
-  };
+
+    try {
+      const exercises = await fetchWorkoutExercises(parsedWorkoutId);
+      setWorkoutExercises(exercises);
+    } catch (error: any) {
+      console.error("Error fetching workout exercises:", error.message);
+    }
+  }, [parsedWorkoutId]);
+
+  useEffect(() => {
+    loadWorkoutExercises();
+  }, [loadWorkoutExercises]);
 
   const handleSearchExercises = async (query: string) => {
     if (query.trim().length < 2) {
@@ -133,38 +97,36 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     }
   };
 
-  const selectApiExercise = (apiExercise: ApiExercise) => {
+  const selectApiExercise = (apiExercise: ApiExercise | null) => {
     setSelectedApiExercise(apiExercise);
-    setNewExerciseName(apiExercise.name);
-    setSearchQuery(apiExercise.name);
+    setNewExerciseName(apiExercise?.name || "");
+    setSearchQuery(apiExercise?.name || "");
     setSearchResults([]);
   };
 
   // Set management
   const addNewSet = () => {
-    const newSet: Set = {
+    const newSet: ExerciseSet = {
       id: generateId(),
       reps: 10,
       weight: 50,
     };
-    setNewExerciseSets([...newExerciseSets, newSet]);
+    setNewExerciseSets((prev) => [...prev, newSet]);
   };
 
-  const removeSet = (setId: string) => {
-    setNewExerciseSets(newExerciseSets.filter((set) => set.id !== setId));
+  const removeSet = (setId: number) => {
+    setNewExerciseSets((prev) => prev.filter((set) => set.id !== setId));
   };
 
-  const updateSetReps = (setId: string, reps: number) => {
-    setNewExerciseSets(
-      newExerciseSets.map((set) => (set.id === setId ? { ...set, reps } : set)),
+  const updateSetReps = (setId: number, reps: number) => {
+    setNewExerciseSets((prev) =>
+      prev.map((set) => (set.id === setId ? { ...set, reps } : set)),
     );
   };
 
-  const updateSetWeight = (setId: string, weight: number) => {
-    setNewExerciseSets(
-      newExerciseSets.map((set) =>
-        set.id === setId ? { ...set, weight } : set,
-      ),
+  const updateSetWeight = (setId: number, weight: number) => {
+    setNewExerciseSets((prev) =>
+      prev.map((set) => (set.id === setId ? { ...set, weight } : set)),
     );
   };
 
@@ -183,34 +145,72 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     setIsModalVisible(true);
   };
 
-  const handleAddNewExercise = () => {
-    if (!newExerciseName.trim()) {
+  const removeExercise = async (exercise: Exercise) => {
+    Alert.alert(
+      "Remove Exercise",
+      `Are you sure you want to remove ${exercise.name}?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteExerciseWithSets(exercise.id);
+              await loadWorkoutExercises();
+            } catch (error) {
+              Alert.alert("Error", "Failed to remove exercise");
+              console.error("Error removing exercise:", error);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleAddNewExercise = async () => {
+    const trimmedExerciseName = newExerciseName.trim();
+
+    if (!trimmedExerciseName) {
       Alert.alert("Error", "Please enter an exercise name");
       return;
     }
 
-    if (isEditMode && editingExercise) {
-      const updatedExercise: Exercise = {
-        ...editingExercise,
-        name: newExerciseName.trim(),
-        sets: newExerciseSets,
-      };
-
-      setWorkoutExercises(
-        workoutExercises.map((exercise) =>
-          exercise.id === editingExercise.id ? updatedExercise : exercise,
-        ),
-      );
-    } else {
-      const newExercise: Exercise = {
-        id: generateId(),
-        name: newExerciseName.trim(),
-        sets: newExerciseSets,
-      };
-
-      setWorkoutExercises([...workoutExercises, newExercise]);
+    if (!Number.isInteger(parsedWorkoutId)) {
+      Alert.alert("Error", "Invalid workout id");
+      return;
     }
 
+    if (isEditMode && editingExercise) {
+      try {
+        await updateExerciseWithSets(
+          editingExercise.id,
+          trimmedExerciseName,
+          newExerciseSets,
+        );
+      } catch (error) {
+        Alert.alert("Error", "Failed to update exercise");
+        console.error("Error updating exercise:", error);
+        return;
+      }
+    } else {
+      try {
+        await createExerciseWithSets(
+          parsedWorkoutId,
+          trimmedExerciseName,
+          newExerciseSets,
+        );
+      } catch (error) {
+        Alert.alert("Error", "Failed to create exercise");
+        console.error("Error creating exercise:", error);
+        return;
+      }
+    }
+
+    await loadWorkoutExercises();
     resetModalState();
   };
 
@@ -248,6 +248,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     setSearchQuery,
     startCreatingExercise,
     startEditingExercise,
+    removeExercise,
     handleAddNewExercise,
     cancelExerciseCreation,
     addNewSet,

@@ -20,8 +20,8 @@ const WorkoutsList: React.FC = () => {
 
       <ScrollView className="flex-1">
         {workoutsList.length > 0 ? (
-          workoutsList.map((workout, index) => (
-            <WorkoutItem key={index} workout={workout} index={index} />
+          workoutsList.map((workout) => (
+            <WorkoutItem key={workout.id} workout={workout} />
           ))
         ) : (
           <View className="bg-gray-50 rounded-lg p-8 items-center mt-4">

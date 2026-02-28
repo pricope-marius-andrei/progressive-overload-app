@@ -103,12 +103,12 @@ const ExerciseModal: React.FC = () => {
 
               {/* Search Results */}
               {searchResults.length > 0 && (
-                <View className="max-h-64">
+                <View className="max-h-72">
                   <Text className="text-sm font-medium text-gray-700 mb-2">
                     Found {searchResults.length} exercise
                     {searchResults.length !== 1 ? "s" : ""}:
                   </Text>
-                  <ScrollView className="max-h-48">
+                  <ScrollView>
                     {searchResults.map((exercise) => (
                       <TouchableOpacity
                         key={exercise.exerciseId}
@@ -183,12 +183,12 @@ const ExerciseModal: React.FC = () => {
                     <TouchableOpacity
                       className="bg-white rounded-lg px-3 py-1 border border-indigo-200"
                       onPress={() => {
-                        selectApiExercise(null as any);
+                        selectApiExercise(null);
                         setNewExerciseName("");
                         setSearchQuery("");
                       }}
                     >
-                      <Text className="text-indigo-700 text-sm">Change</Text>
+                      <Text className="text-indigo-700 text-sm">Remove</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

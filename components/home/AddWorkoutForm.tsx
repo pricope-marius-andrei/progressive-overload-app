@@ -6,11 +6,13 @@
 
 import { useHome } from "@/contexts";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React from "react";
+import React, { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 
 const AddWorkoutForm: React.FC = () => {
-  const { newWorkoutName, setNewWorkoutName, handleSaveNewWorkout } = useHome();
+  const { handleSaveNewWorkout } = useHome();
+
+  const [newWorkoutName, setNewWorkoutName] = useState("");
 
   return (
     <View className="flex-row items-center justify-between">
@@ -23,7 +25,10 @@ const AddWorkoutForm: React.FC = () => {
 
       <Pressable
         className="flex-2 bg-primary rounded-lg p-2 justify-center items-center"
-        onPress={handleSaveNewWorkout}
+        onPress={async () => {
+          await handleSaveNewWorkout(newWorkoutName);
+          setNewWorkoutName("");
+        }}
       >
         <AntDesign name="plus-circle" size={24} color="white" />
       </Pressable>

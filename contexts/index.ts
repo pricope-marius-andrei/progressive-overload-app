@@ -5,10 +5,10 @@
  */
 
 // Home context
+export type { HomeContextType, User } from "./home/home.types";
 export { HomeProvider, useHome } from "./HomeContext";
-export type { HomeContextType, User } from "./HomeContext";
 
 // Workout context
-export { WorkoutProvider, useWorkout } from "./WorkoutContext";
-export type { WorkoutContextType } from "./WorkoutContext";
+export type { WorkoutContextType } from "./workout/workout.types";
+export { useWorkout, WorkoutProvider } from "./WorkoutContext";
 

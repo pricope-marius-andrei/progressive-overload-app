@@ -31,10 +31,22 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
+.env.*
+!.env.example
 .env*.local
 
 # typescript
 *.tsbuildinfo
+
+# logs
+*.log
+
+# testing
+coverage/
+
+# Expo shared
+.expo-shared/
 
 app-example
 
