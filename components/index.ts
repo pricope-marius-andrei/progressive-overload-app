@@ -18,6 +18,7 @@ export {
     ExerciseItem,
     ExerciseModal,
     ExercisesList,
+    WorkoutDatePicker,
     WorkoutHeader
 } from "./workout";
 

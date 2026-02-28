@@ -20,10 +20,47 @@ type SnapshotState = {
   }[];
 };
 
+type SnapshotStateSet = {
+  reps?: unknown;
+  weight?: unknown;
+};
+
+type SnapshotStateLike = {
+  name?: unknown;
+  sets?: unknown;
+};
+
 export type SnapshotWriteResult = "inserted" | "updated" | "skipped";
 
 function toSnapshotDate(date: Date = new Date()): string {
   return date.toISOString().slice(0, 10);
+}
+
+function parseSnapshotState(rawState: unknown): SnapshotState {
+  const snapshotState = (rawState || {}) as SnapshotStateLike;
+  const snapshotName =
+    typeof snapshotState.name === "string" &&
+    snapshotState.name.trim().length > 0
+      ? snapshotState.name
+      : "Unnamed Exercise";
+
+  const snapshotSets = Array.isArray(snapshotState.sets)
+    ? snapshotState.sets
+    : [];
+
+  return {
+    name: snapshotName,
+    sets: snapshotSets.map((set) => {
+      const snapshotSet = (set || {}) as SnapshotStateSet;
+      const reps = Number(snapshotSet.reps);
+      const weight = Number(snapshotSet.weight);
+
+      return {
+        reps: Number.isFinite(reps) ? reps : 0,
+        weight: Number.isFinite(weight) ? weight : 0,
+      };
+    }),
+  };
 }
 
 function toSnapshotState(
@@ -218,6 +255,80 @@ export async function fetchWorkoutExercises(
   }
 
   return exercises;
+}
+
+export function getSnapshotDate(date: Date = new Date()): string {
+  return toSnapshotDate(date);
+}
+
+export async function fetchWorkoutSnapshotDatesWithExercises(
+  workoutId: number,
+  days: number,
+): Promise<string[]> {
+  const today = new Date();
+  const oldestAllowedDate = new Date();
+  oldestAllowedDate.setDate(today.getDate() - (days - 1));
+
+  const newestDate = toSnapshotDate(today);
+  const oldestDate = toSnapshotDate(oldestAllowedDate);
+
+  const { data: snapshotRows, error: snapshotsError } = await supabase
+    .from("exercise_daily_snapshot")
+    .select("snapshot_date")
+    .eq("workout_id", workoutId)
+    .gte("snapshot_date", oldestDate)
+    .lte("snapshot_date", newestDate)
+    .order("snapshot_date", { ascending: false });
+
+  if (snapshotsError) {
+    throw new Error(snapshotsError.message);
+  }
+
+  if (!snapshotRows || snapshotRows.length === 0) {
+    return [];
+  }
+
+  return [
+    ...new Set(snapshotRows.map((snapshotRow) => snapshotRow.snapshot_date)),
+  ];
+}
+
+export async function fetchWorkoutExercisesByDate(
+  workoutId: number,
+  snapshotDate: string,
+): Promise<Exercise[]> {
+  if (snapshotDate === toSnapshotDate()) {
+    return fetchWorkoutExercises(workoutId);
+  }
+
+  const { data: snapshotRows, error: snapshotsError } = await supabase
+    .from("exercise_daily_snapshot")
+    .select("exercise_id,snapshot_state")
+    .eq("workout_id", workoutId)
+    .eq("snapshot_date", snapshotDate)
+    .order("exercise_id", { ascending: true });
+
+  if (snapshotsError) {
+    throw new Error(snapshotsError.message);
+  }
+
+  if (!snapshotRows || snapshotRows.length === 0) {
+    return [];
+  }
+
+  return snapshotRows.map((snapshotRow) => {
+    const snapshotState = parseSnapshotState(snapshotRow.snapshot_state);
+
+    return {
+      id: snapshotRow.exercise_id,
+      name: snapshotState.name,
+      sets: snapshotState.sets.map((set, index) => ({
+        id: index + 1,
+        reps: set.reps,
+        weight: set.weight,
+      })),
+    };
+  });
 }
 
 export async function workoutExists(workoutId: number): Promise<boolean> {

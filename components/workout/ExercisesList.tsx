@@ -10,7 +10,7 @@ import { ScrollView, Text, View } from "react-native";
 import ExerciseItem from "./ExerciseItem";
 
 const ExercisesList: React.FC = () => {
-  const { workoutExercises } = useWorkout();
+  const { workoutExercises, selectedSnapshotDate } = useWorkout();
 
   return (
     <View className="flex-1">
@@ -26,8 +26,7 @@ const ExercisesList: React.FC = () => {
         ) : (
           <View className="bg-gray-50 rounded-lg p-8 items-center">
             <Text className="text-gray-500 text-center">
-              No exercises added yet. Tap &quot;Add New Exercise&quot; to get
-              started!
+              No exercises found for {selectedSnapshotDate}.
             </Text>
           </View>
         )}

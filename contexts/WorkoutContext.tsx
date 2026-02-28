@@ -24,6 +24,9 @@ import {
   createExerciseWithSets,
   deleteExerciseWithSets,
   fetchWorkoutExercises,
+  fetchWorkoutExercisesByDate,
+  fetchWorkoutSnapshotDatesWithExercises,
+  getSnapshotDate,
   SnapshotWriteResult,
   updateExerciseWithSets,
 } from "./workout/workout.repository";
@@ -36,12 +39,21 @@ interface WorkoutProviderProps {
   workoutId: string;
 }
 
+const HISTORY_DAYS_LIMIT = 7;
+
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   children,
   workoutId,
 }) => {
+  const todaySnapshotDate = getSnapshotDate();
+
   // Main workout state
   const [workoutExercises, setWorkoutExercises] = useState<Exercise[]>([]);
+  const [selectableSnapshotDates, setSelectableSnapshotDates] = useState<
+    string[]
+  >([]);
+  const [selectedSnapshotDate, setSelectedSnapshotDateState] =
+    useState<string>(todaySnapshotDate);
 
   // Modal state
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -61,6 +73,18 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   // Generate unique ID
   const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
   const parsedWorkoutId = Number(workoutId);
+  const isHistoryMode = selectedSnapshotDate !== todaySnapshotDate;
+
+  const setSelectedSnapshotDate = useCallback(
+    (date: string) => {
+      if (!selectableSnapshotDates.includes(date)) {
+        return;
+      }
+
+      setSelectedSnapshotDateState(date);
+    },
+    [selectableSnapshotDates],
+  );
 
   const loadWorkoutExercises = useCallback(async () => {
     if (!Number.isInteger(parsedWorkoutId)) {
@@ -69,12 +93,38 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     }
 
     try {
-      const exercises = await fetchWorkoutExercises(parsedWorkoutId);
+      const exercises =
+        selectedSnapshotDate === todaySnapshotDate
+          ? await fetchWorkoutExercises(parsedWorkoutId)
+          : await fetchWorkoutExercisesByDate(
+              parsedWorkoutId,
+              selectedSnapshotDate,
+            );
       setWorkoutExercises(exercises);
+
+      const availableDates = await fetchWorkoutSnapshotDatesWithExercises(
+        parsedWorkoutId,
+        HISTORY_DAYS_LIMIT,
+      );
+      setSelectableSnapshotDates(availableDates);
+
+      if (
+        availableDates.length > 0 &&
+        !availableDates.includes(selectedSnapshotDate)
+      ) {
+        setSelectedSnapshotDateState(availableDates[0]);
+      }
+
+      if (
+        availableDates.length === 0 &&
+        selectedSnapshotDate !== todaySnapshotDate
+      ) {
+        setSelectedSnapshotDateState(todaySnapshotDate);
+      }
     } catch (error: any) {
       console.error("Error fetching workout exercises:", error.message);
     }
-  }, [parsedWorkoutId]);
+  }, [parsedWorkoutId, selectedSnapshotDate, todaySnapshotDate]);
 
   useEffect(() => {
     loadWorkoutExercises();
@@ -133,6 +183,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   // Exercise management
   const startEditingExercise = (exercise: Exercise) => {
+    if (isHistoryMode) {
+      Alert.alert("History mode", "Switch to today to edit exercises.");
+      return;
+    }
+
     setEditingExercise(exercise);
     setIsEditMode(true);
     setNewExerciseName(exercise.name);
@@ -142,11 +197,21 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   };
 
   const startCreatingExercise = () => {
+    if (isHistoryMode) {
+      Alert.alert("History mode", "Switch to today to add exercises.");
+      return;
+    }
+
     resetModalState();
     setIsModalVisible(true);
   };
 
   const removeExercise = async (exercise: Exercise) => {
+    if (isHistoryMode) {
+      Alert.alert("History mode", "Switch to today to remove exercises.");
+      return;
+    }
+
     Alert.alert(
       "Remove Exercise",
       `Are you sure you want to remove ${exercise.name}?`,
@@ -175,6 +240,11 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const handleAddNewExercise = async () => {
     const trimmedExerciseName = newExerciseName.trim();
     let snapshotWriteResult: SnapshotWriteResult = "skipped";
+
+    if (isHistoryMode) {
+      Alert.alert("History mode", "Switch to today to save exercise changes.");
+      return;
+    }
 
     if (!trimmedExerciseName) {
       Alert.alert("Error", "Please enter an exercise name");
@@ -249,6 +319,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const value: WorkoutContextType = {
     workoutId,
     workoutExercises,
+    selectedSnapshotDate,
+    selectableSnapshotDates,
+    isHistoryMode,
     isModalVisible,
     newExerciseName,
     newExerciseSets,
@@ -261,6 +334,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     selectedApiExercise,
     setNewExerciseName,
     setSearchQuery,
+    setSelectedSnapshotDate,
     startCreatingExercise,
     startEditingExercise,
     removeExercise,

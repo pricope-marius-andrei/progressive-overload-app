@@ -17,6 +17,7 @@ import React, {
 import {
   createWorkout,
   deleteWorkout,
+  fetchAndUpdateDailyStreak,
   fetchWorkouts,
 } from "./home/home.repository";
 import { HomeContextType, User } from "./home/home.types";
@@ -32,11 +33,10 @@ interface HomeProviderProps {
 export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   const router = useRouter();
 
-  // User state (in real app, this would come from user authentication/profile)
-  const user: User = {
+  const [user, setUser] = useState<User>({
     username: "Marius",
-    dailyStreak: 5,
-  };
+    dailyStreak: 0,
+  });
 
   // Workouts state
   const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
@@ -51,6 +51,16 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    const initializeDailyStreak = async () => {
+      try {
+        const streak = await fetchAndUpdateDailyStreak();
+        setUser((prev) => ({ ...prev, dailyStreak: streak }));
+      } catch (error: any) {
+        console.error("Error initializing daily streak:", error.message);
+      }
+    };
+
+    initializeDailyStreak();
     loadWorkouts();
   }, []);
 

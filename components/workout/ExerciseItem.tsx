@@ -15,7 +15,7 @@ interface ExerciseItemProps {
 }
 
 const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
-  const { startEditingExercise, removeExercise } = useWorkout();
+  const { startEditingExercise, removeExercise, isHistoryMode } = useWorkout();
 
   return (
     <View className="bg-white rounded-lg shadow p-4 mb-4">
@@ -25,19 +25,41 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
         </Text>
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
-            className="bg-indigo-100 rounded-lg px-3 py-2"
+            className={`rounded-lg px-3 py-2 ${
+              isHistoryMode ? "bg-gray-100" : "bg-indigo-100"
+            }`}
             onPress={() => startEditingExercise(exercise)}
+            disabled={isHistoryMode}
           >
             <View className="flex-row items-center">
-              <Ionicons name="pencil" size={16} color="#6366f1" />
-              <Text className="text-primary font-medium ml-1">Edit</Text>
+              <Ionicons
+                name="pencil"
+                size={16}
+                color={isHistoryMode ? "#9ca3af" : "#6366f1"}
+              />
+              <Text
+                className={`font-medium ml-1 ${
+                  isHistoryMode ? "text-gray-400" : "text-primary"
+                }`}
+              >
+                Edit
+              </Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
-            className="bg-red-100 rounded-lg px-3 py-2"
+            className={`rounded-lg px-3 py-2 ${
+              isHistoryMode ? "bg-gray-100" : "bg-red-100"
+            }`}
             onPress={() => removeExercise(exercise)}
+            disabled={isHistoryMode}
           >
-            <Text className="text-red-600 font-medium">Remove</Text>
+            <Text
+              className={`font-medium ${
+                isHistoryMode ? "text-gray-400" : "text-red-600"
+              }`}
+            >
+              Remove
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

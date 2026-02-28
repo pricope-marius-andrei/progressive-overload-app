@@ -14,6 +14,30 @@ export type Database = {
   };
   public: {
     Tables: {
+      app_state: {
+        Row: {
+          created_at: string;
+          daily_streak: number;
+          id: number;
+          last_open_date: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          daily_streak?: number;
+          id?: number;
+          last_open_date?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          daily_streak?: number;
+          id?: number;
+          last_open_date?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       excercise_set: {
         Row: {
           created_at: string;

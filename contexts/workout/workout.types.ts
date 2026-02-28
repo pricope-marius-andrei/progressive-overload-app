@@ -7,6 +7,9 @@ import {
 export interface WorkoutContextType {
   workoutId: string;
   workoutExercises: Exercise[];
+  selectedSnapshotDate: string;
+  selectableSnapshotDates: string[];
+  isHistoryMode: boolean;
   isModalVisible: boolean;
   newExerciseName: string;
   newExerciseSets: ExerciseSet[];
@@ -19,6 +22,7 @@ export interface WorkoutContextType {
   selectedApiExercise: ApiExercise | null;
   setNewExerciseName: (name: string) => void;
   setSearchQuery: (query: string) => void;
+  setSelectedSnapshotDate: (date: string) => void;
   startCreatingExercise: () => void;
   startEditingExercise: (exercise: Exercise) => void;
   removeExercise: (exercise: Exercise) => Promise<void>;
