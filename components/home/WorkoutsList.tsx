@@ -13,10 +13,17 @@ const WorkoutsList: React.FC = () => {
   const { workoutsList } = useHome();
 
   return (
-    <View className="flex-1 mt-6">
-      <Text className="text-lg font-semibold text-gray-700 mb-2">
-        Your Workouts ({workoutsList.length})
-      </Text>
+    <View className="flex-1 mt-5">
+      <View className="flex-row items-center justify-between mb-3">
+        <Text className="text-lg font-semibold text-gray-900">
+          Start workout
+        </Text>
+        <View className="bg-white border border-gray-100 rounded-full px-3 py-1">
+          <Text className="text-sm font-semibold text-gray-600">
+            {workoutsList.length}
+          </Text>
+        </View>
+      </View>
 
       <ScrollView className="flex-1">
         {workoutsList.length > 0 ? (
@@ -24,12 +31,12 @@ const WorkoutsList: React.FC = () => {
             <WorkoutItem key={workout.id} workout={workout} />
           ))
         ) : (
-          <View className="bg-gray-50 rounded-lg p-8 items-center mt-4">
-            <Text className="text-gray-500 text-center text-lg mb-2">
+          <View className="bg-white rounded-2xl border border-gray-100 p-8 items-center mt-2">
+            <Text className="text-gray-700 text-center text-lg font-semibold mb-2">
               No workouts yet
             </Text>
-            <Text className="text-gray-400 text-center">
-              Create your first workout above to get started!
+            <Text className="text-gray-500 text-center">
+              Create one above to start your first training session.
             </Text>
           </View>
         )}

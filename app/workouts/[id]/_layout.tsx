@@ -43,17 +43,28 @@ const WorkoutIdLayout: React.FC = () => {
 
   if (isValidWorkout === null) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <ActivityIndicator size="small" color="#6366f1" />
-        <Text className="mt-3 text-base text-gray-600">Loading workout...</Text>
+      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
+        <View className="bg-white border border-gray-100 rounded-2xl p-6 items-center w-full max-w-sm">
+          <ActivityIndicator size="small" color="#6366f1" />
+          <Text className="mt-3 text-base text-gray-600">
+            Loading workout...
+          </Text>
+        </View>
       </View>
     );
   }
 
   if (!workoutId || !isValidWorkout) {
     return (
-      <View className="flex-1 items-center justify-center px-6">
-        <Text className="text-base text-gray-600">Workout not found.</Text>
+      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
+        <View className="bg-white border border-gray-100 rounded-2xl p-6 items-center w-full max-w-sm">
+          <Text className="text-base font-semibold text-gray-800 mb-1">
+            Workout not found
+          </Text>
+          <Text className="text-sm text-gray-500 text-center">
+            Go back to Home and open an existing workout.
+          </Text>
+        </View>
       </View>
     );
   }

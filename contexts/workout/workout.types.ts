@@ -6,6 +6,7 @@ import {
 
 export interface WorkoutContextType {
   workoutId: string;
+  workoutName: string;
   workoutExercises: Exercise[];
   selectedSnapshotDate: string;
   selectableSnapshotDates: string[];

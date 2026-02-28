@@ -16,17 +16,21 @@ interface ExerciseItemProps {
 
 const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
   const { startEditingExercise, removeExercise, isHistoryMode } = useWorkout();
+  const setLabel = `${exercise.sets.length} set${exercise.sets.length === 1 ? "" : "s"}`;
 
   return (
-    <View className="bg-white rounded-lg shadow p-4 mb-4">
-      <View className="flex-row justify-between items-center mb-2">
-        <Text className="text-lg font-semibold text-gray-800 flex-1">
-          {exercise.name}
-        </Text>
+    <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+      <View className="flex-row justify-between items-center mb-3">
+        <View className="flex-1 pr-2">
+          <Text className="text-lg font-semibold text-gray-900">
+            {exercise.name}
+          </Text>
+          <Text className="text-sm text-gray-500 mt-0.5">{setLabel}</Text>
+        </View>
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
-            className={`rounded-lg px-3 py-2 ${
-              isHistoryMode ? "bg-gray-100" : "bg-indigo-100"
+            className={`rounded-xl px-3 py-2 ${
+              isHistoryMode ? "bg-gray-100" : "bg-indigo-50"
             }`}
             onPress={() => startEditingExercise(exercise)}
             disabled={isHistoryMode}
@@ -47,8 +51,8 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
             </View>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`rounded-lg px-3 py-2 ${
-              isHistoryMode ? "bg-gray-100" : "bg-red-100"
+            className={`rounded-xl px-3 py-2 ${
+              isHistoryMode ? "bg-gray-100" : "bg-red-50"
             }`}
             onPress={() => removeExercise(exercise)}
             disabled={isHistoryMode}
@@ -67,10 +71,10 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
       {exercise.sets.map((set, index) => (
         <View
           key={set.id}
-          className="flex-row justify-between items-center py-2 border-b border-gray-200"
+          className="flex-row justify-between items-center py-2.5 px-2 rounded-xl bg-gray-50 mb-2"
         >
-          <Text className="text-gray-600">Set {index + 1}</Text>
-          <Text className="text-gray-800">
+          <Text className="text-gray-500">Set {index + 1}</Text>
+          <Text className="text-gray-800 font-medium">
             {set.reps} reps × {set.weight} kg
           </Text>
         </View>

@@ -49,32 +49,45 @@ const ExerciseModal: React.FC = () => {
     >
       <View className="flex-1 bg-gray-50">
         {/* Modal Header */}
-        <View className="bg-white px-4 py-3 border-b border-gray-200">
+        <View className="bg-white px-4 pt-3 pb-4 border-b border-gray-100">
+          <View className="w-10 h-1 bg-gray-300 rounded-full self-center mb-3" />
           <View className="flex-row justify-between items-center">
-            <TouchableOpacity onPress={cancelExerciseCreation}>
-              <Text className="text-primary text-lg">Cancel</Text>
+            <TouchableOpacity
+              className="bg-gray-100 rounded-xl px-3 py-2"
+              onPress={cancelExerciseCreation}
+            >
+              <Text className="text-gray-700 text-sm font-medium">Cancel</Text>
             </TouchableOpacity>
-            <Text className="text-xl font-semibold text-gray-800">
-              {isEditMode ? "Edit Exercise" : "New Exercise"}
-            </Text>
-            <TouchableOpacity onPress={handleAddNewExercise}>
-              <Text className="text-primary text-lg font-semibold">
+            <View className="items-center">
+              <Text className="text-xs text-gray-500">Workout exercise</Text>
+              <Text className="text-lg font-semibold text-gray-900">
+                {isEditMode ? "Edit" : "Create"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              className="bg-primary rounded-xl px-3 py-2"
+              onPress={handleAddNewExercise}
+            >
+              <Text className="text-white text-sm font-semibold">
                 {isEditMode ? "Update" : "Save"}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <ScrollView className="flex-1 p-4">
+        <ScrollView
+          className="flex-1 p-4"
+          contentContainerStyle={{ paddingBottom: 24 }}
+        >
           {/* Exercise Search/Selection Section */}
           {!isEditMode && !showCustomEntry ? (
-            <View className="bg-white rounded-lg p-4 mb-4">
+            <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
               <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-lg font-semibold text-gray-800">
+                <Text className="text-lg font-semibold text-gray-900">
                   Search Exercises
                 </Text>
                 <TouchableOpacity
-                  className="bg-gray-100 rounded-lg px-3 py-2"
+                  className="bg-gray-100 rounded-xl px-3 py-2"
                   onPress={() => setShowCustomEntry(true)}
                 >
                   <Text className="text-gray-700 font-medium">
@@ -84,7 +97,7 @@ const ExerciseModal: React.FC = () => {
               </View>
 
               <TextInput
-                className="border border-gray-300 rounded-lg px-3 py-3 text-lg mb-3"
+                className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-3 text-base mb-3"
                 placeholder="Search for exercises (e.g., Bench Press, Squats...)"
                 value={searchQuery}
                 onChangeText={(text) => {
@@ -112,7 +125,7 @@ const ExerciseModal: React.FC = () => {
                     {searchResults.map((exercise) => (
                       <TouchableOpacity
                         key={exercise.exerciseId}
-                        className="flex-1 border border-gray-200 rounded-lg p-3 mb-2 bg-gray-50"
+                        className="flex-1 border border-gray-200 rounded-2xl p-3 mb-2 bg-gray-50"
                         onPress={() => selectApiExercise(exercise)}
                       >
                         <View className="flex-row justify-between items-start">
@@ -124,10 +137,10 @@ const ExerciseModal: React.FC = () => {
                                   width: 200,
                                   height: 150,
                                 }}
-                                className="w-full h-32 rounded-lg object-cover"
+                                className="w-full h-32 rounded-xl object-cover"
                               />
                             )}
-                            <Text className="font-semibold text-gray-800">
+                            <Text className="font-semibold text-gray-900">
                               {exercise.name}
                             </Text>
                             <Text className="text-sm text-gray-600 mt-1">
@@ -150,12 +163,12 @@ const ExerciseModal: React.FC = () => {
               {searchQuery.length >= 2 &&
                 !isSearching &&
                 searchResults.length === 0 && (
-                  <View className="py-4 items-center border border-dashed border-gray-300 rounded-lg">
+                  <View className="py-4 items-center border border-dashed border-gray-300 rounded-xl">
                     <Text className="text-gray-500 mb-2">
                       No exercises found for &quot;{searchQuery}&quot;
                     </Text>
                     <TouchableOpacity
-                      className="bg-primary rounded-lg px-4 py-2"
+                      className="bg-primary rounded-xl px-4 py-2"
                       onPress={() => {
                         setNewExerciseName(searchQuery);
                         setShowCustomEntry(true);
@@ -170,7 +183,7 @@ const ExerciseModal: React.FC = () => {
 
               {/* Selected exercise preview */}
               {selectedApiExercise && (
-                <View className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mt-3">
+                <View className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mt-3">
                   <View className="flex-row justify-between items-center">
                     <View className="flex-1">
                       <Text className="font-semibold text-indigo-800">
@@ -181,7 +194,7 @@ const ExerciseModal: React.FC = () => {
                       </Text>
                     </View>
                     <TouchableOpacity
-                      className="bg-white rounded-lg px-3 py-1 border border-indigo-200"
+                      className="bg-white rounded-xl px-3 py-1 border border-indigo-200"
                       onPress={() => {
                         selectApiExercise(null);
                         setNewExerciseName("");
@@ -196,14 +209,14 @@ const ExerciseModal: React.FC = () => {
             </View>
           ) : (
             // Custom Exercise Entry
-            <View className="bg-white rounded-lg p-4 mb-4">
+            <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
               <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-lg font-semibold text-gray-800">
+                <Text className="text-lg font-semibold text-gray-900">
                   {isEditMode ? "Exercise Name" : "Custom Exercise Name"}
                 </Text>
                 {!isEditMode && (
                   <TouchableOpacity
-                    className="bg-gray-100 rounded-lg px-3 py-2"
+                    className="bg-gray-100 rounded-xl px-3 py-2"
                     onPress={() => setShowCustomEntry(false)}
                   >
                     <Text className="text-gray-700 font-medium">
@@ -213,29 +226,30 @@ const ExerciseModal: React.FC = () => {
                 )}
               </View>
               <TextInput
-                className="border border-gray-300 rounded-lg px-3 py-3 text-lg"
+                className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-3 text-base"
                 placeholder="Enter custom exercise name..."
                 value={newExerciseName}
                 onChangeText={setNewExerciseName}
-                autoFocus={isEditMode}
+                autoFocus
               />
             </View>
           )}
 
           {/* Sets Section */}
-          <View className="bg-white rounded-lg p-4">
+          <View className="bg-white rounded-2xl p-4 border border-gray-100">
             <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-lg font-semibold text-gray-800">Sets</Text>
+              <Text className="text-lg font-semibold text-gray-900">Sets</Text>
               <TouchableOpacity
-                className="bg-primary rounded-lg px-4 py-2"
+                className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2 flex-row items-center"
                 onPress={addNewSet}
               >
-                <Text className="text-white font-semibold">Add Set</Text>
+                <Ionicons name="add" size={16} color="#6366f1" />
+                <Text className="text-primary font-semibold ml-1">Add Set</Text>
               </TouchableOpacity>
             </View>
 
             {newExerciseSets.length === 0 ? (
-              <View className="bg-gray-50 rounded-lg p-8 items-center">
+              <View className="bg-gray-50 rounded-xl p-8 items-center">
                 <Text className="text-gray-500 text-center mb-2">
                   No sets added yet
                 </Text>
@@ -247,16 +261,18 @@ const ExerciseModal: React.FC = () => {
               newExerciseSets.map((set, index) => (
                 <View
                   key={set.id}
-                  className="flex-row items-center justify-between py-3 border-b border-gray-100"
+                  className="flex-row items-center justify-between py-3 border border-gray-100 rounded-xl px-2 mb-2"
                 >
                   <View className="flex-row items-center flex-1">
-                    <Text className="text-gray-600 w-12">Set {index + 1}</Text>
+                    <Text className="text-gray-600 w-12 font-medium">
+                      Set {index + 1}
+                    </Text>
 
                     {/* Reps Input */}
                     <View className="flex-1 mx-2">
                       <Text className="text-xs text-gray-500 mb-1">Reps</Text>
                       <TextInput
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-center"
+                        className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 text-center"
                         value={set.reps.toString()}
                         onChangeText={(text) => {
                           const reps = parseInt(text) || 0;
@@ -273,7 +289,7 @@ const ExerciseModal: React.FC = () => {
                         Weight (kg)
                       </Text>
                       <TextInput
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-center"
+                        className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 text-center"
                         value={set.weight.toString()}
                         onChangeText={(text) => {
                           const weight = parseFloat(text) || 0;
@@ -287,7 +303,7 @@ const ExerciseModal: React.FC = () => {
 
                   {/* Remove Set Button */}
                   <TouchableOpacity
-                    className="p-2"
+                    className="p-2 bg-red-50 rounded-lg"
                     onPress={() => removeSet(set.id)}
                   >
                     <Ionicons name="trash-outline" size={20} color="#ef4444" />

@@ -25,6 +25,7 @@ import {
   deleteExerciseWithSets,
   fetchWorkoutExercises,
   fetchWorkoutExercisesByDate,
+  fetchWorkoutName,
   fetchWorkoutSnapshotDatesWithExercises,
   getSnapshotDate,
   SnapshotWriteResult,
@@ -48,6 +49,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const todaySnapshotDate = getSnapshotDate();
 
   // Main workout state
+  const [workoutName, setWorkoutName] = useState("Workout");
   const [workoutExercises, setWorkoutExercises] = useState<Exercise[]>([]);
   const [selectableSnapshotDates, setSelectableSnapshotDates] = useState<
     string[]
@@ -129,6 +131,25 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   useEffect(() => {
     loadWorkoutExercises();
   }, [loadWorkoutExercises]);
+
+  useEffect(() => {
+    const loadWorkoutName = async () => {
+      if (!Number.isInteger(parsedWorkoutId)) {
+        setWorkoutName("Workout");
+        return;
+      }
+
+      try {
+        const name = await fetchWorkoutName(parsedWorkoutId);
+        setWorkoutName(name);
+      } catch (error: any) {
+        console.error("Error fetching workout name:", error.message);
+        setWorkoutName("Workout");
+      }
+    };
+
+    loadWorkoutName();
+  }, [parsedWorkoutId]);
 
   const handleSearchExercises = async (query: string) => {
     if (query.trim().length < 2) {
@@ -318,6 +339,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   const value: WorkoutContextType = {
     workoutId,
+    workoutName,
     workoutExercises,
     selectedSnapshotDate,
     selectableSnapshotDates,

@@ -2,7 +2,7 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-const DATE_CARD_WIDTH = 92;
+const DATE_CARD_WIDTH = 96;
 const DATE_CARD_GAP = 8;
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -78,7 +78,7 @@ const WorkoutDatePicker: React.FC = () => {
 
   return (
     <View
-      className="mb-4"
+      className="mb-1"
       onLayout={(event) => {
         setContainerWidth(event.nativeEvent.layout.width);
       }}
@@ -97,10 +97,10 @@ const WorkoutDatePicker: React.FC = () => {
           return (
             <TouchableOpacity
               key={date}
-              className={`flex items-center rounded-lg border py-2 mr-2 ${
+              className={`flex items-center rounded-xl border py-2.5 mr-2 ${
                 isSelected
                   ? "bg-primary border-primary"
-                  : "bg-white border-gray-200"
+                  : "bg-gray-50 border-gray-200"
               }`}
               style={{ width: DATE_CARD_WIDTH }}
               onPress={() => setSelectedSnapshotDate(date)}

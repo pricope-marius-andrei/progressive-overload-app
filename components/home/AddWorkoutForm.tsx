@@ -7,31 +7,52 @@
 import { useHome } from "@/contexts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 const AddWorkoutForm: React.FC = () => {
   const { handleSaveNewWorkout } = useHome();
 
   const [newWorkoutName, setNewWorkoutName] = useState("");
+  const isDisabled = !newWorkoutName.trim();
 
   return (
-    <View className="flex-row items-center justify-between">
-      <TextInput
-        className="flex-1 border border-gray-300 bg-white rounded-lg px-4 mr-4"
-        placeholder="Workout Name"
-        value={newWorkoutName}
-        onChangeText={setNewWorkoutName}
-      />
+    <View className="bg-white rounded-2xl p-4 border border-gray-100">
+      <Text className="text-base font-semibold text-gray-900 mb-3">
+        Create workout
+      </Text>
 
-      <Pressable
-        className="flex-2 bg-primary rounded-lg p-2 justify-center items-center"
-        onPress={async () => {
-          await handleSaveNewWorkout(newWorkoutName);
-          setNewWorkoutName("");
-        }}
-      >
-        <AntDesign name="plus-circle" size={24} color="white" />
-      </Pressable>
+      <View className="flex-row items-center gap-3">
+        <TextInput
+          className="flex-1 border border-gray-200 bg-gray-50 rounded-xl px-4 py-3"
+          placeholder="e.g. Push Day"
+          value={newWorkoutName}
+          onChangeText={setNewWorkoutName}
+          returnKeyType="done"
+          onSubmitEditing={async () => {
+            if (isDisabled) {
+              return;
+            }
+
+            await handleSaveNewWorkout(newWorkoutName);
+            setNewWorkoutName("");
+          }}
+        />
+
+        <Pressable
+          className={`rounded-xl px-4 py-3 items-center justify-center ${isDisabled ? "bg-indigo-200" : "bg-primary"}`}
+          disabled={isDisabled}
+          onPress={async () => {
+            await handleSaveNewWorkout(newWorkoutName);
+            setNewWorkoutName("");
+          }}
+        >
+          <AntDesign name="plus" size={16} color="white" />
+        </Pressable>
+      </View>
+
+      <Text className="text-xs text-gray-500 mt-2">
+        Add a workout, then tap it below to start logging exercises.
+      </Text>
     </View>
   );
 };

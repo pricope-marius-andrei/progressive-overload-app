@@ -345,6 +345,20 @@ export async function workoutExists(workoutId: number): Promise<boolean> {
   return !!data;
 }
 
+export async function fetchWorkoutName(workoutId: number): Promise<string> {
+  const { data, error } = await supabase
+    .from("workout")
+    .select("name")
+    .eq("id", workoutId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data?.name || "Workout";
+}
+
 export async function createExerciseWithSets(
   workoutId: number,
   exerciseName: string,
