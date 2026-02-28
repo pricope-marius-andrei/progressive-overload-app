@@ -39,12 +39,22 @@ function getMonthDayLabel(snapshotDate: string): string {
 const WorkoutDatePicker: React.FC = () => {
   const scrollViewRef = React.useRef<ScrollView>(null);
   const [containerWidth, setContainerWidth] = React.useState(0);
+  const todaySnapshotDate = React.useMemo(
+    () => new Date().toISOString().slice(0, 10),
+    [],
+  );
   const {
     selectedSnapshotDate,
     selectableSnapshotDates,
     setSelectedSnapshotDate,
   } = useWorkout();
-  const orderedSnapshotDates = [...selectableSnapshotDates].reverse();
+  const orderedSnapshotDates = React.useMemo(() => {
+    if (selectableSnapshotDates.length > 0) {
+      return [...selectableSnapshotDates].reverse();
+    }
+
+    return [todaySnapshotDate];
+  }, [selectableSnapshotDates, todaySnapshotDate]);
 
   const horizontalInset = Math.max((containerWidth - DATE_CARD_WIDTH) / 2, 0);
 
@@ -71,10 +81,6 @@ const WorkoutDatePicker: React.FC = () => {
 
     return () => cancelAnimationFrame(frameId);
   }, [containerWidth, orderedSnapshotDates, selectedSnapshotDate]);
-
-  if (orderedSnapshotDates.length === 0) {
-    return null;
-  }
 
   return (
     <View
