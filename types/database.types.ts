@@ -49,6 +49,51 @@ export type Database = {
           },
         ];
       };
+      exercise_daily_snapshot: {
+        Row: {
+          created_at: string;
+          exercise_id: number;
+          id: number;
+          snapshot_date: string;
+          snapshot_state: Json;
+          updated_at: string;
+          workout_id: number;
+        };
+        Insert: {
+          created_at?: string;
+          exercise_id: number;
+          id?: number;
+          snapshot_date?: string;
+          snapshot_state: Json;
+          updated_at?: string;
+          workout_id: number;
+        };
+        Update: {
+          created_at?: string;
+          exercise_id?: number;
+          id?: number;
+          snapshot_date?: string;
+          snapshot_state?: Json;
+          updated_at?: string;
+          workout_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "exercise_daily_snapshot_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercise";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_daily_snapshot_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       exercise: {
         Row: {
           created_at: string;

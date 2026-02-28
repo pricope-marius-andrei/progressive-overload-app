@@ -24,6 +24,7 @@ import {
   createExerciseWithSets,
   deleteExerciseWithSets,
   fetchWorkoutExercises,
+  SnapshotWriteResult,
   updateExerciseWithSets,
 } from "./workout/workout.repository";
 import { WorkoutContextType } from "./workout/workout.types";
@@ -173,6 +174,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   const handleAddNewExercise = async () => {
     const trimmedExerciseName = newExerciseName.trim();
+    let snapshotWriteResult: SnapshotWriteResult = "skipped";
 
     if (!trimmedExerciseName) {
       Alert.alert("Error", "Please enter an exercise name");
@@ -186,7 +188,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
     if (isEditMode && editingExercise) {
       try {
-        await updateExerciseWithSets(
+        snapshotWriteResult = await updateExerciseWithSets(
           editingExercise.id,
           trimmedExerciseName,
           newExerciseSets,
@@ -198,7 +200,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
       }
     } else {
       try {
-        await createExerciseWithSets(
+        snapshotWriteResult = await createExerciseWithSets(
           parsedWorkoutId,
           trimmedExerciseName,
           newExerciseSets,
@@ -208,6 +210,19 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
         console.error("Error creating exercise:", error);
         return;
       }
+    }
+
+    const snapshotMessages: Record<SnapshotWriteResult, string> = {
+      inserted: "Snapshot inserted for today",
+      updated: "Today's snapshot updated",
+      skipped: "Snapshot unchanged (no write)",
+    };
+    const snapshotMessage = snapshotMessages[snapshotWriteResult];
+
+    console.info(`[snapshot] ${snapshotMessage}`);
+
+    if (__DEV__) {
+      Alert.alert("Snapshot", snapshotMessage);
     }
 
     await loadWorkoutExercises();
