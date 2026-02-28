@@ -118,6 +118,63 @@ export type Database = {
           },
         ];
       };
+      exercise_performance_index: {
+        Row: {
+          best_set_e1rm_pr: number;
+          best_set_e1rm_pr_date: string | null;
+          created_at: string;
+          exercise_id: number;
+          id: number;
+          rep_pr_dates: Json;
+          rep_prs: Json;
+          total_volume_pr: number;
+          total_volume_pr_date: string | null;
+          updated_at: string;
+          workout_id: number;
+        };
+        Insert: {
+          best_set_e1rm_pr?: number;
+          best_set_e1rm_pr_date?: string | null;
+          created_at?: string;
+          exercise_id: number;
+          id?: number;
+          rep_pr_dates?: Json;
+          rep_prs?: Json;
+          total_volume_pr?: number;
+          total_volume_pr_date?: string | null;
+          updated_at?: string;
+          workout_id: number;
+        };
+        Update: {
+          best_set_e1rm_pr?: number;
+          best_set_e1rm_pr_date?: string | null;
+          created_at?: string;
+          exercise_id?: number;
+          id?: number;
+          rep_pr_dates?: Json;
+          rep_prs?: Json;
+          total_volume_pr?: number;
+          total_volume_pr_date?: string | null;
+          updated_at?: string;
+          workout_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "exercise_performance_index_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: true;
+            referencedRelation: "exercise";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "exercise_performance_index_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       exercise: {
         Row: {
           created_at: string;

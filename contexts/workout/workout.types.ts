@@ -2,14 +2,21 @@ import {
     ApiExercise,
     Exercise,
     ExerciseSet,
+    ExerciseSummary,
 } from "@/types/mappers/workout.mapper";
+import { ExercisePerformanceBadges } from "./performance.types";
 
 export interface WorkoutContextType {
   workoutId: string;
   workoutName: string;
-  workoutExercises: Exercise[];
+  workoutExercises: ExerciseSummary[];
   selectedSnapshotDate: string;
   selectableSnapshotDates: string[];
+  getExercisePerformanceBadges: (
+    exerciseId: number,
+  ) => ExercisePerformanceBadges;
+  loadExerciseDetails: (exerciseId: number) => Promise<Exercise | null>;
+  getLoadedExerciseDetails: (exerciseId: number) => Exercise | null;
   isHistoryMode: boolean;
   isModalVisible: boolean;
   newExerciseName: string;
@@ -25,8 +32,8 @@ export interface WorkoutContextType {
   setSearchQuery: (query: string) => void;
   setSelectedSnapshotDate: (date: string) => void;
   startCreatingExercise: () => void;
-  startEditingExercise: (exercise: Exercise) => void;
-  removeExercise: (exercise: Exercise) => Promise<void>;
+  startEditingExercise: (exerciseId: number) => Promise<void>;
+  removeExercise: (exercise: ExerciseSummary) => Promise<void>;
   handleAddNewExercise: () => Promise<void>;
   cancelExerciseCreation: () => void;
   addNewSet: () => void;

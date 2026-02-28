@@ -9,6 +9,7 @@ import {
   ApiExercise,
   Exercise,
   ExerciseSet,
+  ExerciseSummary,
 } from "@/types/mappers/workout.mapper";
 import React, {
   createContext,
@@ -21,10 +22,16 @@ import React, {
 import { Alert } from "react-native";
 import { searchExercises } from "./workout/exercise-search.service";
 import {
+  EMPTY_EXERCISE_PERFORMANCE_BADGES,
+  ExercisePerformanceBadges,
+} from "./workout/performance.types";
+import {
   createExerciseWithSets,
   deleteExerciseWithSets,
-  fetchWorkoutExercises,
-  fetchWorkoutExercisesByDate,
+  fetchExercisePerformanceBadges,
+  fetchWorkoutExerciseDetails,
+  fetchWorkoutExerciseSummaries,
+  fetchWorkoutExerciseSummariesByDate,
   fetchWorkoutName,
   fetchWorkoutSnapshotDatesWithExercises,
   getSnapshotDate,
@@ -41,6 +48,7 @@ interface WorkoutProviderProps {
 }
 
 const HISTORY_DAYS_LIMIT = 7;
+const SNAPSHOT_WINDOW_DAYS = HISTORY_DAYS_LIMIT + 1;
 
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   children,
@@ -50,12 +58,22 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   // Main workout state
   const [workoutName, setWorkoutName] = useState("Workout");
-  const [workoutExercises, setWorkoutExercises] = useState<Exercise[]>([]);
+  const [workoutExercises, setWorkoutExercises] = useState<ExerciseSummary[]>(
+    [],
+  );
+  const [exerciseSummariesByDate, setExerciseSummariesByDate] = useState<
+    Record<string, ExerciseSummary[]>
+  >({});
+  const [exerciseDetailsById, setExerciseDetailsById] = useState<
+    Record<number, Exercise>
+  >({});
   const [selectableSnapshotDates, setSelectableSnapshotDates] = useState<
     string[]
   >([]);
   const [selectedSnapshotDate, setSelectedSnapshotDateState] =
     useState<string>(todaySnapshotDate);
+  const [exercisePerformanceBadgesById, setExercisePerformanceBadgesById] =
+    useState<Record<number, ExercisePerformanceBadges>>({});
 
   // Modal state
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -83,42 +101,58 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
         return;
       }
 
+      const cachedSummaries = exerciseSummariesByDate[date];
+      if (cachedSummaries) {
+        setWorkoutExercises(cachedSummaries);
+        setExerciseDetailsById({});
+        setExercisePerformanceBadgesById({});
+      }
+
       setSelectedSnapshotDateState(date);
     },
-    [selectableSnapshotDates],
+    [exerciseSummariesByDate, selectableSnapshotDates],
   );
 
   const loadWorkoutExercises = useCallback(async () => {
     if (!Number.isInteger(parsedWorkoutId)) {
       setWorkoutExercises([]);
+      setExerciseDetailsById({});
+      setExercisePerformanceBadgesById({});
+      setExerciseSummariesByDate({});
       return;
     }
 
     try {
       const exercises =
         selectedSnapshotDate === todaySnapshotDate
-          ? await fetchWorkoutExercises(parsedWorkoutId)
-          : await fetchWorkoutExercisesByDate(
+          ? await fetchWorkoutExerciseSummaries(parsedWorkoutId)
+          : await fetchWorkoutExerciseSummariesByDate(
               parsedWorkoutId,
               selectedSnapshotDate,
             );
       setWorkoutExercises(exercises);
+      setExerciseSummariesByDate((previous) => ({
+        ...previous,
+        [selectedSnapshotDate]: exercises,
+      }));
+      setExerciseDetailsById({});
+      setExercisePerformanceBadgesById({});
 
       const availableDates = await fetchWorkoutSnapshotDatesWithExercises(
         parsedWorkoutId,
-        HISTORY_DAYS_LIMIT,
+        SNAPSHOT_WINDOW_DAYS,
       );
-      setSelectableSnapshotDates(availableDates);
+      const datesWithToday = availableDates.includes(todaySnapshotDate)
+        ? availableDates
+        : [todaySnapshotDate, ...availableDates];
+      setSelectableSnapshotDates(datesWithToday);
 
-      if (
-        availableDates.length > 0 &&
-        !availableDates.includes(selectedSnapshotDate)
-      ) {
-        setSelectedSnapshotDateState(availableDates[0]);
+      if (!datesWithToday.includes(selectedSnapshotDate)) {
+        setSelectedSnapshotDateState(todaySnapshotDate);
       }
 
       if (
-        availableDates.length === 0 &&
+        datesWithToday.length === 0 &&
         selectedSnapshotDate !== todaySnapshotDate
       ) {
         setSelectedSnapshotDateState(todaySnapshotDate);
@@ -203,9 +237,16 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   };
 
   // Exercise management
-  const startEditingExercise = (exercise: Exercise) => {
+  const startEditingExercise = async (exerciseId: number) => {
     if (isHistoryMode) {
       Alert.alert("History mode", "Switch to today to edit exercises.");
+      return;
+    }
+
+    const exercise = await loadExerciseDetails(exerciseId);
+
+    if (!exercise) {
+      Alert.alert("Error", "Failed to load exercise details");
       return;
     }
 
@@ -227,7 +268,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     setIsModalVisible(true);
   };
 
-  const removeExercise = async (exercise: Exercise) => {
+  const removeExercise = async (exercise: ExerciseSummary) => {
     if (isHistoryMode) {
       Alert.alert("History mode", "Switch to today to remove exercises.");
       return;
@@ -279,11 +320,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
     if (isEditMode && editingExercise) {
       try {
-        snapshotWriteResult = await updateExerciseWithSets(
+        const saveResult = await updateExerciseWithSets(
           editingExercise.id,
           trimmedExerciseName,
           newExerciseSets,
         );
+        snapshotWriteResult = saveResult.snapshotWriteResult;
       } catch (error) {
         Alert.alert("Error", "Failed to update exercise");
         console.error("Error updating exercise:", error);
@@ -291,11 +333,12 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
       }
     } else {
       try {
-        snapshotWriteResult = await createExerciseWithSets(
+        const saveResult = await createExerciseWithSets(
           parsedWorkoutId,
           trimmedExerciseName,
           newExerciseSets,
         );
+        snapshotWriteResult = saveResult.snapshotWriteResult;
       } catch (error) {
         Alert.alert("Error", "Failed to create exercise");
         console.error("Error creating exercise:", error);
@@ -337,12 +380,78 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     setSelectedApiExercise(null);
   };
 
+  const getExercisePerformanceBadges = (
+    exerciseId: number,
+  ): ExercisePerformanceBadges => {
+    return (
+      exercisePerformanceBadgesById[exerciseId] ||
+      EMPTY_EXERCISE_PERFORMANCE_BADGES
+    );
+  };
+
+  const getLoadedExerciseDetails = (exerciseId: number): Exercise | null => {
+    return exerciseDetailsById[exerciseId] || null;
+  };
+
+  const loadExerciseDetails = async (
+    exerciseId: number,
+  ): Promise<Exercise | null> => {
+    const cachedExercise = exerciseDetailsById[exerciseId];
+    if (cachedExercise) {
+      return cachedExercise;
+    }
+
+    if (!Number.isInteger(parsedWorkoutId)) {
+      return null;
+    }
+
+    try {
+      const exercise = await fetchWorkoutExerciseDetails(
+        parsedWorkoutId,
+        exerciseId,
+        selectedSnapshotDate,
+      );
+
+      if (!exercise) {
+        return null;
+      }
+
+      setExerciseDetailsById((previous) => ({
+        ...previous,
+        [exerciseId]: exercise,
+      }));
+
+      try {
+        const performanceBadges = await fetchExercisePerformanceBadges(
+          parsedWorkoutId,
+          [exercise],
+          selectedSnapshotDate,
+        );
+        setExercisePerformanceBadgesById((previous) => ({
+          ...previous,
+          [exerciseId]:
+            performanceBadges[exerciseId] || EMPTY_EXERCISE_PERFORMANCE_BADGES,
+        }));
+      } catch (performanceError) {
+        console.error("Error loading performance badges:", performanceError);
+      }
+
+      return exercise;
+    } catch (error) {
+      console.error("Error loading exercise details:", error);
+      return null;
+    }
+  };
+
   const value: WorkoutContextType = {
     workoutId,
     workoutName,
     workoutExercises,
     selectedSnapshotDate,
     selectableSnapshotDates,
+    getExercisePerformanceBadges,
+    loadExerciseDetails,
+    getLoadedExerciseDetails,
     isHistoryMode,
     isModalVisible,
     newExerciseName,

@@ -26,6 +26,12 @@ export interface Exercise {
   sets: ExerciseSet[];
 }
 
+export interface ExerciseSummary {
+  id: number;
+  name: string;
+  setCount: number;
+}
+
 export function toExercise(exerciseRow: ExerciseRow): Exercise {
   return {
     id: exerciseRow.id,
