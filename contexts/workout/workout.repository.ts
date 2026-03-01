@@ -457,6 +457,7 @@ export async function fetchWorkoutExerciseSummaries(
     .from("exercise")
     .select("id,name")
     .eq("workout_id", workoutId)
+    .is("deleted_at", null)
     .order("id", { ascending: true });
 
   if (exercisesError) {
@@ -606,6 +607,7 @@ export async function fetchWorkoutExerciseDetails(
     .select()
     .eq("workout_id", workoutId)
     .eq("id", exerciseId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (exerciseError) {
@@ -766,12 +768,12 @@ export async function deleteExerciseWithSets(
     throw new Error(deleteSetsError.message);
   }
 
-  const { error: deleteExerciseError } = await supabase
+  const { error: archiveExerciseError } = await supabase
     .from("exercise")
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq("id", exerciseId);
 
-  if (deleteExerciseError) {
-    throw new Error(deleteExerciseError.message);
+  if (archiveExerciseError) {
+    throw new Error(archiveExerciseError.message);
   }
 }

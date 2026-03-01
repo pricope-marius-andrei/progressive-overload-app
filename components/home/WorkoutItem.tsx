@@ -8,7 +8,7 @@ import { useHome } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
-import { Pressable, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Pressable, Text, TouchableOpacity, View } from "react-native";
 
 interface WorkoutItemProps {
   workout: Workout;
@@ -16,6 +16,24 @@ interface WorkoutItemProps {
 
 const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
   const { navigateToWorkout, handleDeleteWorkout } = useHome();
+
+  const handleConfirmDeleteWorkout = () => {
+    Alert.alert(
+      "Delete workout?",
+      `This will permanently remove \"${workout.name}\" and all of its exercises.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDeleteWorkout(workout),
+        },
+      ],
+    );
+  };
 
   return (
     <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
@@ -36,7 +54,7 @@ const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
         </Pressable>
         <TouchableOpacity
           className="bg-red-50 rounded-xl p-2 ml-3"
-          onPress={() => handleDeleteWorkout(workout)}
+          onPress={handleConfirmDeleteWorkout}
         >
           <AntDesign name="delete" size={18} color="#ef4444" />
         </TouchableOpacity>

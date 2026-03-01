@@ -8,7 +8,7 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseSummary } from "@/types/mappers/workout.mapper";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { getExerciseStats } from "./exercise-stats";
 
 interface ExerciseItemProps {
@@ -64,6 +64,26 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
     }
   };
 
+  const handleConfirmRemoveExercise = () => {
+    Alert.alert(
+      "Remove exercise?",
+      `This will permanently remove \"${exercise.name}\" and all of its sets.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            void removeExercise(exercise);
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
       <View className="flex-row justify-between items-center mb-3">
@@ -115,7 +135,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
             className={`rounded-xl px-3 py-2 ${
               isHistoryMode ? "bg-gray-100" : "bg-red-50"
             }`}
-            onPress={() => removeExercise(exercise)}
+            onPress={handleConfirmRemoveExercise}
             disabled={isHistoryMode}
           >
             <Text

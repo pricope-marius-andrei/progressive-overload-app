@@ -8,6 +8,7 @@ import { useWorkout } from "@/contexts/WorkoutContext";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
+  Alert,
   Image,
   Modal,
   ScrollView,
@@ -40,6 +41,20 @@ const ExerciseModal: React.FC = () => {
     updateSetReps,
     updateSetWeight,
   } = useWorkout();
+
+  const handleConfirmRemoveSet = (setId: number, setIndex: number) => {
+    Alert.alert("Remove set?", `Set ${setIndex + 1} will be removed.`, [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => removeSet(setId),
+      },
+    ]);
+  };
 
   return (
     <Modal
@@ -196,9 +211,25 @@ const ExerciseModal: React.FC = () => {
                     <TouchableOpacity
                       className="bg-white rounded-xl px-3 py-1 border border-indigo-200"
                       onPress={() => {
-                        selectApiExercise(null);
-                        setNewExerciseName("");
-                        setSearchQuery("");
+                        Alert.alert(
+                          "Remove selected exercise?",
+                          "The selected exercise will be cleared.",
+                          [
+                            {
+                              text: "Cancel",
+                              style: "cancel",
+                            },
+                            {
+                              text: "Remove",
+                              style: "destructive",
+                              onPress: () => {
+                                selectApiExercise(null);
+                                setNewExerciseName("");
+                                setSearchQuery("");
+                              },
+                            },
+                          ],
+                        );
                       }}
                     >
                       <Text className="text-indigo-700 text-sm">Remove</Text>
@@ -304,7 +335,7 @@ const ExerciseModal: React.FC = () => {
                   {/* Remove Set Button */}
                   <TouchableOpacity
                     className="p-2 bg-red-50 rounded-lg"
-                    onPress={() => removeSet(set.id)}
+                    onPress={() => handleConfirmRemoveSet(set.id, index)}
                   >
                     <Ionicons name="trash-outline" size={20} color="#ef4444" />
                   </TouchableOpacity>

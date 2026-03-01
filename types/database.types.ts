@@ -184,6 +184,7 @@ export type Database = {
       exercise: {
         Row: {
           created_at: string;
+          deleted_at: string | null;
           id: number;
           name: string;
           updated_at: string;
@@ -191,6 +192,7 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          deleted_at?: string | null;
           id?: number;
           name: string;
           updated_at?: string;
@@ -198,6 +200,7 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          deleted_at?: string | null;
           id?: number;
           name?: string;
           updated_at?: string;
