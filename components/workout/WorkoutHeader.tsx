@@ -10,7 +10,7 @@ import { Text, View } from "react-native";
 import WorkoutDatePicker from "./WorkoutDatePicker";
 
 const WorkoutHeader: React.FC = () => {
-  const { workoutName, isHistoryMode } = useWorkout();
+  const { workoutName } = useWorkout();
 
   return (
     <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">
@@ -23,11 +23,6 @@ const WorkoutHeader: React.FC = () => {
       </Text>
 
       <WorkoutDatePicker />
-      {isHistoryMode && (
-        <Text className="text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-1">
-          Viewing history snapshot. Switch to today to edit this workout.
-        </Text>
-      )}
     </View>
   );
 };

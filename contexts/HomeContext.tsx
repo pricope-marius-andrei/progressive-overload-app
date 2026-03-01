@@ -10,6 +10,7 @@ import { Href, useRouter } from "expo-router";
 import React, {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -42,32 +43,33 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   // Workouts state
   const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
 
-  const loadWorkouts = async () => {
+  const loadWorkouts = useCallback(async () => {
     try {
       const workouts = await fetchWorkouts();
       setWorkoutsList(workouts);
     } catch (error: any) {
       console.error("Error fetching workouts:", error.message);
     }
-  };
+  }, []);
+
+  const refreshHomeState = useCallback(async () => {
+    try {
+      const progress = await fetchAndUpdateAppProgress();
+      setUser((prev) => ({
+        ...prev,
+        dailyStreak: progress.dailyStreak,
+        experienceScore: progress.experienceScore,
+      }));
+    } catch (error: any) {
+      console.error("Error refreshing app progress:", error.message);
+    }
+
+    await loadWorkouts();
+  }, [loadWorkouts]);
 
   useEffect(() => {
-    const initializeAppProgress = async () => {
-      try {
-        const progress = await fetchAndUpdateAppProgress();
-        setUser((prev) => ({
-          ...prev,
-          dailyStreak: progress.dailyStreak,
-          experienceScore: progress.experienceScore,
-        }));
-      } catch (error: any) {
-        console.error("Error initializing app progress:", error.message);
-      }
-    };
-
-    initializeAppProgress();
-    loadWorkouts();
-  }, []);
+    refreshHomeState();
+  }, [refreshHomeState]);
 
   // Actions
   const handleSaveNewWorkout = async (newWorkoutName: string) => {
@@ -111,6 +113,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   };
 
   const value: HomeContextType = {
+    refreshHomeState,
     handleDeleteWorkout,
     handleSaveNewWorkout,
     navigateToWorkout,

@@ -173,6 +173,10 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     }
   }, [parsedWorkoutId, selectedSnapshotDate, todaySnapshotDate]);
 
+  const refreshWorkoutState = useCallback(async () => {
+    await loadWorkoutExercises();
+  }, [loadWorkoutExercises]);
+
   useEffect(() => {
     loadWorkoutExercises();
   }, [loadWorkoutExercises]);
@@ -449,6 +453,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     workoutId,
     workoutName,
     workoutExercises,
+    refreshWorkoutState,
     selectedSnapshotDate,
     selectableSnapshotDates,
     getExercisePerformanceBadges,

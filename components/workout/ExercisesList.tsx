@@ -5,12 +5,23 @@
  */
 
 import { useWorkout } from "@/contexts/WorkoutContext";
-import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import { RefreshControl, ScrollView, Text, View } from "react-native";
 import ExerciseItem from "./ExerciseItem";
 
 const ExercisesList: React.FC = () => {
-  const { workoutExercises, selectedSnapshotDate } = useWorkout();
+  const { workoutExercises, selectedSnapshotDate, refreshWorkoutState } =
+    useWorkout();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshWorkoutState();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshWorkoutState]);
 
   return (
     <View className="flex-1">
@@ -31,6 +42,9 @@ const ExercisesList: React.FC = () => {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: 20 }}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
       >
         {workoutExercises.length > 0 ? (
           workoutExercises.map((exercise) => (

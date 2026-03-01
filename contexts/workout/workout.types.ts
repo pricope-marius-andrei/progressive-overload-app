@@ -15,6 +15,7 @@ export interface WorkoutContextType {
   workoutId: string;
   workoutName: string;
   workoutExercises: ExerciseSummary[];
+  refreshWorkoutState: () => Promise<void>;
   selectedSnapshotDate: string;
   selectableSnapshotDates: string[];
   getExercisePerformanceBadges: (

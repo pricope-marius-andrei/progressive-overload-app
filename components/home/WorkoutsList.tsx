@@ -6,7 +6,7 @@
 
 import { useHome } from "@/contexts";
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import WorkoutItem from "./WorkoutItem";
 
 const WorkoutsList: React.FC = () => {
@@ -25,7 +25,7 @@ const WorkoutsList: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView className="flex-1">
+      <View>
         {workoutsList.length > 0 ? (
           workoutsList.map((workout) => (
             <WorkoutItem key={workout.id} workout={workout} />
@@ -40,7 +40,7 @@ const WorkoutsList: React.FC = () => {
             </Text>
           </View>
         )}
-      </ScrollView>
+      </View>
     </View>
   );
 };
