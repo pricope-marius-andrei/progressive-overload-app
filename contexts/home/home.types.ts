@@ -3,6 +3,7 @@ import { Workout } from "@/types/mappers/workout.mapper";
 export interface User {
   username: string;
   dailyStreak: number;
+  experienceScore: number;
 }
 
 export interface HomeContextType {

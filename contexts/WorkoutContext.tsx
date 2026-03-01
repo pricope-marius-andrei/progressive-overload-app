@@ -19,7 +19,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { Alert } from "react-native";
+import { awardXpForNewPrs } from "./home/home.repository";
 import { searchExercises } from "./workout/exercise-search.service";
 import {
   EMPTY_EXERCISE_PERFORMANCE_BADGES,
@@ -49,6 +49,13 @@ interface WorkoutProviderProps {
 
 const HISTORY_DAYS_LIMIT = 7;
 const SNAPSHOT_WINDOW_DAYS = HISTORY_DAYS_LIMIT + 1;
+
+const countNewPrs = (badges: ExercisePerformanceBadges): number => {
+  const repPrCount = Object.values(badges.repPrsByWeight).filter(
+    Boolean,
+  ).length;
+  return Number(badges.totalVolume) + Number(badges.bestSetE1RM) + repPrCount;
+};
 
 export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   children,
@@ -89,6 +96,10 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const [showCustomEntry, setShowCustomEntry] = useState(false);
   const [selectedApiExercise, setSelectedApiExercise] =
     useState<ApiExercise | null>(null);
+  const [xpGainEvent, setXpGainEvent] = useState<{
+    id: number;
+    amount: number;
+  } | null>(null);
 
   // Generate unique ID
   const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
@@ -239,14 +250,14 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   // Exercise management
   const startEditingExercise = async (exerciseId: number) => {
     if (isHistoryMode) {
-      Alert.alert("History mode", "Switch to today to edit exercises.");
+      console.warn("History mode: switch to today to edit exercises.");
       return;
     }
 
     const exercise = await loadExerciseDetails(exerciseId);
 
     if (!exercise) {
-      Alert.alert("Error", "Failed to load exercise details");
+      console.error("Failed to load exercise details");
       return;
     }
 
@@ -260,7 +271,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   const startCreatingExercise = () => {
     if (isHistoryMode) {
-      Alert.alert("History mode", "Switch to today to add exercises.");
+      console.warn("History mode: switch to today to add exercises.");
       return;
     }
 
@@ -270,51 +281,35 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
   const removeExercise = async (exercise: ExerciseSummary) => {
     if (isHistoryMode) {
-      Alert.alert("History mode", "Switch to today to remove exercises.");
+      console.warn("History mode: switch to today to remove exercises.");
       return;
     }
 
-    Alert.alert(
-      "Remove Exercise",
-      `Are you sure you want to remove ${exercise.name}?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteExerciseWithSets(exercise.id);
-              await loadWorkoutExercises();
-            } catch (error) {
-              Alert.alert("Error", "Failed to remove exercise");
-              console.error("Error removing exercise:", error);
-            }
-          },
-        },
-      ],
-    );
+    try {
+      await deleteExerciseWithSets(exercise.id);
+      await loadWorkoutExercises();
+    } catch (error) {
+      console.error("Error removing exercise:", error);
+    }
   };
 
   const handleAddNewExercise = async () => {
     const trimmedExerciseName = newExerciseName.trim();
     let snapshotWriteResult: SnapshotWriteResult = "skipped";
+    let newPrCount = 0;
 
     if (isHistoryMode) {
-      Alert.alert("History mode", "Switch to today to save exercise changes.");
+      console.warn("History mode: switch to today to save exercise changes.");
       return;
     }
 
     if (!trimmedExerciseName) {
-      Alert.alert("Error", "Please enter an exercise name");
+      console.warn("Please enter an exercise name");
       return;
     }
 
     if (!Number.isInteger(parsedWorkoutId)) {
-      Alert.alert("Error", "Invalid workout id");
+      console.error("Invalid workout id");
       return;
     }
 
@@ -326,8 +321,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
           newExerciseSets,
         );
         snapshotWriteResult = saveResult.snapshotWriteResult;
+        newPrCount = countNewPrs(saveResult.performanceBadges);
       } catch (error) {
-        Alert.alert("Error", "Failed to update exercise");
         console.error("Error updating exercise:", error);
         return;
       }
@@ -339,8 +334,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
           newExerciseSets,
         );
         snapshotWriteResult = saveResult.snapshotWriteResult;
+        newPrCount = countNewPrs(saveResult.performanceBadges);
       } catch (error) {
-        Alert.alert("Error", "Failed to create exercise");
         console.error("Error creating exercise:", error);
         return;
       }
@@ -355,8 +350,15 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
     console.info(`[snapshot] ${snapshotMessage}`);
 
-    if (__DEV__) {
-      Alert.alert("Snapshot", snapshotMessage);
+    if (newPrCount > 0) {
+      try {
+        const awardedXp = await awardXpForNewPrs(newPrCount);
+        if (awardedXp > 0) {
+          setXpGainEvent({ id: Date.now(), amount: awardedXp });
+        }
+      } catch (error) {
+        console.error("Error awarding PR XP:", error);
+      }
     }
 
     await loadWorkoutExercises();
@@ -463,6 +465,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
     isSearching,
     showCustomEntry,
     selectedApiExercise,
+    xpGainEvent,
     setNewExerciseName,
     setSearchQuery,
     setSelectedSnapshotDate,

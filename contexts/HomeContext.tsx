@@ -17,7 +17,7 @@ import React, {
 import {
   createWorkout,
   deleteWorkout,
-  fetchAndUpdateDailyStreak,
+  fetchAndUpdateAppProgress,
   fetchWorkouts,
 } from "./home/home.repository";
 import { HomeContextType, User } from "./home/home.types";
@@ -36,6 +36,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User>({
     username: "Marius",
     dailyStreak: 0,
+    experienceScore: 0,
   });
 
   // Workouts state
@@ -51,16 +52,20 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    const initializeDailyStreak = async () => {
+    const initializeAppProgress = async () => {
       try {
-        const streak = await fetchAndUpdateDailyStreak();
-        setUser((prev) => ({ ...prev, dailyStreak: streak }));
+        const progress = await fetchAndUpdateAppProgress();
+        setUser((prev) => ({
+          ...prev,
+          dailyStreak: progress.dailyStreak,
+          experienceScore: progress.experienceScore,
+        }));
       } catch (error: any) {
-        console.error("Error initializing daily streak:", error.message);
+        console.error("Error initializing app progress:", error.message);
       }
     };
 
-    initializeDailyStreak();
+    initializeAppProgress();
     loadWorkouts();
   }, []);
 

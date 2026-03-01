@@ -18,22 +18,28 @@ export type Database = {
         Row: {
           created_at: string;
           daily_streak: number;
+          experience_score: number;
           id: number;
           last_open_date: string | null;
+          last_monthly_bonus_period: string | null;
           updated_at: string;
         };
         Insert: {
           created_at?: string;
           daily_streak?: number;
+          experience_score?: number;
           id?: number;
           last_open_date?: string | null;
+          last_monthly_bonus_period?: string | null;
           updated_at?: string;
         };
         Update: {
           created_at?: string;
           daily_streak?: number;
+          experience_score?: number;
           id?: number;
           last_open_date?: string | null;
+          last_monthly_bonus_period?: string | null;
           updated_at?: string;
         };
         Relationships: [];

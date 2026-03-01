@@ -28,6 +28,11 @@ const WelcomeHeader: React.FC = () => {
           {user.dailyStreak} day streak
         </Text>
       </View>
+      <View className="mt-2 self-start bg-indigo-50 rounded-full px-3 py-1">
+        <Text className="text-primary font-semibold">
+          {user.experienceScore} XP
+        </Text>
+      </View>
       <Text className="text-gray-500 mt-2 text-sm">
         Open the app daily to keep your streak growing.
       </Text>

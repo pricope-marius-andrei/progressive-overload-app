@@ -12,6 +12,7 @@ import {
     ExerciseModal,
     ExercisesList,
     WorkoutHeader,
+    XpGainPopup,
 } from "../../../components";
 
 const DayWorkoutScreen: React.FC = () => {
@@ -21,6 +22,7 @@ const DayWorkoutScreen: React.FC = () => {
       <AddExerciseButton />
       <ExercisesList />
       <ExerciseModal />
+      <XpGainPopup />
     </View>
   );
 };

@@ -19,6 +19,7 @@ export {
     ExerciseModal,
     ExercisesList,
     WorkoutDatePicker,
-    WorkoutHeader
+    WorkoutHeader,
+    XpGainPopup
 } from "./workout";
 

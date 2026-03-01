@@ -6,6 +6,11 @@ import {
 } from "@/types/mappers/workout.mapper";
 import { ExercisePerformanceBadges } from "./performance.types";
 
+export interface XpGainEvent {
+  id: number;
+  amount: number;
+}
+
 export interface WorkoutContextType {
   workoutId: string;
   workoutName: string;
@@ -28,6 +33,7 @@ export interface WorkoutContextType {
   isSearching: boolean;
   showCustomEntry: boolean;
   selectedApiExercise: ApiExercise | null;
+  xpGainEvent: XpGainEvent | null;
   setNewExerciseName: (name: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedSnapshotDate: (date: string) => void;
