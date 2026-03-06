@@ -9,10 +9,17 @@ const XpGainPopup: React.FC = () => {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(12)).current;
   const scale = useRef(new Animated.Value(0.95)).current;
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (!xpGainEvent || xpGainEvent.amount <= 0) {
       return;
+    }
+
+    // Stop any running animation before starting a new one
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
     }
 
     setDisplayAmount(xpGainEvent.amount);
@@ -22,7 +29,7 @@ const XpGainPopup: React.FC = () => {
     translateY.setValue(12);
     scale.setValue(0.95);
 
-    Animated.sequence([
+    const animation = Animated.sequence([
       Animated.parallel([
         Animated.timing(opacity, {
           toValue: 1,
@@ -53,10 +60,26 @@ const XpGainPopup: React.FC = () => {
           useNativeDriver: true,
         }),
       ]),
-    ]).start(() => {
-      setIsVisible(false);
+    ]);
+
+    animationRef.current = animation;
+
+    animation.start(({ finished }) => {
+      if (finished) {
+        setIsVisible(false);
+      }
+      animationRef.current = null;
     });
   }, [opacity, scale, translateY, xpGainEvent]);
+
+  // Cleanup animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        animationRef.current.stop();
+      }
+    };
+  }, []);
 
   if (!isVisible || displayAmount <= 0) {
     return null;

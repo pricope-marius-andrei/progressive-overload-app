@@ -6,7 +6,7 @@
 
 import { useHome } from "@/contexts";
 import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 const AddWorkoutForm: React.FC = () => {
@@ -14,6 +14,15 @@ const AddWorkoutForm: React.FC = () => {
 
   const [newWorkoutName, setNewWorkoutName] = useState("");
   const isDisabled = !newWorkoutName.trim();
+
+  const handleSubmit = useCallback(async () => {
+    if (!newWorkoutName.trim()) {
+      return;
+    }
+
+    await handleSaveNewWorkout(newWorkoutName);
+    setNewWorkoutName("");
+  }, [newWorkoutName, handleSaveNewWorkout]);
 
   return (
     <View className="bg-white rounded-2xl p-4 border border-gray-100">
@@ -28,23 +37,13 @@ const AddWorkoutForm: React.FC = () => {
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"
-          onSubmitEditing={async () => {
-            if (isDisabled) {
-              return;
-            }
-
-            await handleSaveNewWorkout(newWorkoutName);
-            setNewWorkoutName("");
-          }}
+          onSubmitEditing={handleSubmit}
         />
 
         <Pressable
           className={`rounded-xl px-4 py-3 items-center justify-center ${isDisabled ? "bg-indigo-200" : "bg-primary"}`}
           disabled={isDisabled}
-          onPress={async () => {
-            await handleSaveNewWorkout(newWorkoutName);
-            setNewWorkoutName("");
-          }}
+          onPress={handleSubmit}
         >
           <AntDesign name="plus" size={16} color="white" />
         </Pressable>

@@ -41,6 +41,47 @@ const getMonthDiff = (startDateKey: string, endDateKey: string): number => {
   return Math.max(0, endMonthIndex - startMonthIndex);
 };
 
+async function fetchAppState() {
+  const { data, error } = await supabase
+    .from("app_state")
+    .select(
+      "id, daily_streak, experience_score, last_open_date, last_monthly_bonus_period",
+    )
+    .eq("id", APP_STATE_SINGLETON_ID)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+async function ensureAppState(
+  overrides: Partial<AppStateInsert> = {},
+): Promise<{ daily_streak: number; experience_score: number }> {
+  const payload: AppStateInsert = {
+    id: APP_STATE_SINGLETON_ID,
+    daily_streak: 0,
+    experience_score: 0,
+    last_open_date: null,
+    last_monthly_bonus_period: getMonthPeriodKey(),
+    ...overrides,
+  };
+
+  const { data, error } = await supabase
+    .from("app_state")
+    .insert(payload)
+    .select("daily_streak, experience_score")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
 export async function fetchWorkouts(): Promise<Workout[]> {
   const { data, error } = await supabase.from("workout").select();
 
@@ -48,7 +89,7 @@ export async function fetchWorkouts(): Promise<Workout[]> {
     throw new Error(error.message);
   }
 
-  return (data || []).map(toWorkout);
+  return (data ?? []).map(toWorkout);
 }
 
 export async function createWorkout(workoutName: string): Promise<Workout> {
@@ -77,49 +118,23 @@ export async function deleteWorkout(workoutId: number): Promise<void> {
   }
 }
 
-export async function fetchAndUpdateDailyStreak(): Promise<number> {
-  const progress = await fetchAndUpdateAppProgress();
-  return progress.dailyStreak;
-}
-
 export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   const todayDateKey = getTodayDateKey();
   const currentMonthPeriodKey = getMonthPeriodKey();
 
-  const { data: appState, error: fetchError } = await supabase
-    .from("app_state")
-    .select(
-      "id, daily_streak, experience_score, last_open_date, last_monthly_bonus_period",
-    )
-    .eq("id", APP_STATE_SINGLETON_ID)
-    .maybeSingle();
-
-  if (fetchError) {
-    throw new Error(fetchError.message);
-  }
+  const appState = await fetchAppState();
 
   if (!appState) {
-    const payload: AppStateInsert = {
-      id: APP_STATE_SINGLETON_ID,
+    const created = await ensureAppState({
       daily_streak: 1,
       experience_score: DAILY_LOGIN_XP,
       last_open_date: todayDateKey,
       last_monthly_bonus_period: currentMonthPeriodKey,
-    };
-
-    const { data: createdAppState, error: createError } = await supabase
-      .from("app_state")
-      .insert(payload)
-      .select("daily_streak, experience_score")
-      .single();
-
-    if (createError) {
-      throw new Error(createError.message);
-    }
+    });
 
     return {
-      dailyStreak: createdAppState.daily_streak,
-      experienceScore: createdAppState.experience_score,
+      dailyStreak: created.daily_streak,
+      experienceScore: created.experience_score,
     };
   }
 
@@ -131,7 +146,7 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   }
 
   const previousBonusPeriodKey =
-    appState.last_monthly_bonus_period ||
+    appState.last_monthly_bonus_period ??
     getMonthPeriodKey(
       appState.last_open_date
         ? parseDateKey(appState.last_open_date)
@@ -145,7 +160,7 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
 
   const nextStreak = appState.daily_streak + 1;
   const nextExperienceScore =
-    (appState.experience_score || 0) + DAILY_LOGIN_XP + monthlyBonusXp;
+    (appState.experience_score ?? 0) + DAILY_LOGIN_XP + monthlyBonusXp;
   const { data: updatedAppState, error: updateError } = await supabase
     .from("app_state")
     .update({
@@ -181,37 +196,18 @@ export async function awardXpForNewPrs(newPrCount: number): Promise<number> {
   const xpToAward = normalizedPrCount * XP_PER_NEW_PR;
   const nowIsoString = new Date().toISOString();
 
-  const { data: appState, error: fetchError } = await supabase
-    .from("app_state")
-    .select("id, experience_score")
-    .eq("id", APP_STATE_SINGLETON_ID)
-    .maybeSingle();
-
-  if (fetchError) {
-    throw new Error(fetchError.message);
-  }
+  const appState = await fetchAppState();
 
   if (!appState) {
-    const payload: AppStateInsert = {
-      id: APP_STATE_SINGLETON_ID,
-      daily_streak: 0,
+    await ensureAppState({
       experience_score: xpToAward,
-      last_open_date: null,
-      last_monthly_bonus_period: getMonthPeriodKey(),
       updated_at: nowIsoString,
-    };
-
-    const { error: createError } = await supabase
-      .from("app_state")
-      .insert(payload);
-    if (createError) {
-      throw new Error(createError.message);
-    }
+    });
 
     return xpToAward;
   }
 
-  const nextExperienceScore = (appState.experience_score || 0) + xpToAward;
+  const nextExperienceScore = (appState.experience_score ?? 0) + xpToAward;
   const { error: updateError } = await supabase
     .from("app_state")
     .update({

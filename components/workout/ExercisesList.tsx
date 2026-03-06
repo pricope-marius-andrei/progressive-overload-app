@@ -1,13 +1,26 @@
 /**
  * ExercisesList Component - Progressive Overload Gym App
  *
- * Scrollable list of exercises with empty state
+ * Virtualized list of exercises with empty state and pull-to-refresh
  */
 
 import { useWorkout } from "@/contexts/WorkoutContext";
+import { ExerciseSummary } from "@/types/mappers/workout.mapper";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import {
+    FlatList,
+    ListRenderItemInfo,
+    RefreshControl,
+    Text,
+    View,
+} from "react-native";
 import ExerciseItem from "./ExerciseItem";
+
+const renderExerciseItem = ({ item }: ListRenderItemInfo<ExerciseSummary>) => (
+  <ExerciseItem exercise={item} />
+);
+
+const keyExtractor = (item: ExerciseSummary) => String(item.id);
 
 const ExercisesList: React.FC = () => {
   const { workoutExercises, selectedSnapshotDate, refreshWorkoutState } =
@@ -22,6 +35,20 @@ const ExercisesList: React.FC = () => {
       setIsRefreshing(false);
     }
   }, [refreshWorkoutState]);
+
+  const ListEmptyComponent = useCallback(
+    () => (
+      <View className="bg-white rounded-2xl border border-gray-100 p-8 items-center">
+        <Text className="text-gray-700 text-center font-semibold mb-1">
+          No exercises yet
+        </Text>
+        <Text className="text-gray-500 text-center">
+          No exercises found for {selectedSnapshotDate}.
+        </Text>
+      </View>
+    ),
+    [selectedSnapshotDate],
+  );
 
   return (
     <View className="flex-1">
@@ -39,28 +66,17 @@ const ExercisesList: React.FC = () => {
           : `No entries for ${selectedSnapshotDate} yet.`}
       </Text>
 
-      <ScrollView
+      <FlatList
         className="flex-1"
+        data={workoutExercises}
+        renderItem={renderExerciseItem}
+        keyExtractor={keyExtractor}
+        ListEmptyComponent={ListEmptyComponent}
         contentContainerStyle={{ paddingBottom: 20 }}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }
-      >
-        {workoutExercises.length > 0 ? (
-          workoutExercises.map((exercise) => (
-            <ExerciseItem key={exercise.id} exercise={exercise} />
-          ))
-        ) : (
-          <View className="bg-white rounded-2xl border border-gray-100 p-8 items-center">
-            <Text className="text-gray-700 text-center font-semibold mb-1">
-              No exercises yet
-            </Text>
-            <Text className="text-gray-500 text-center">
-              No exercises found for {selectedSnapshotDate}.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+      />
     </View>
   );
 };

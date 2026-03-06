@@ -1,24 +1,27 @@
 import { getExerciseStats } from "@/components/workout/exercise-stats";
 import {
-    ExerciseDailySnapshotInsert,
-    ExerciseInsert,
-    ExercisePerformanceIndexInsert,
-    ExercisePerformanceIndexUpdate,
-    ExerciseSetInsert,
-    ExerciseUpdate,
+  ExerciseDailySnapshotInsert,
+  ExerciseInsert,
+  ExercisePerformanceIndexInsert,
+  ExerciseSetInsert,
+  ExerciseUpdate,
 } from "@/types/entities";
 import {
-    Exercise,
-    ExerciseSet,
-    ExerciseSummary,
-    toExercise,
-    toExerciseSet,
+  Exercise,
+  ExerciseSet,
+  ExerciseSummary,
+  toExercise,
+  toExerciseSet,
 } from "@/types/mappers/workout.mapper";
 import { supabase } from "@/utils/supabase";
 import {
-    EMPTY_EXERCISE_PERFORMANCE_BADGES,
-    ExercisePerformanceBadges,
+  EMPTY_EXERCISE_PERFORMANCE_BADGES,
+  ExercisePerformanceBadges,
 } from "./performance.types";
+
+// Note: table name has a known typo ("excercise" instead of "exercise")
+// in the database schema. Using a constant to prevent typo propagation.
+const TABLE_EXERCISE_SET = "excercise_set" as const;
 
 type SnapshotState = {
   name: string;
@@ -67,11 +70,14 @@ export type ExerciseSaveResult = {
 const FLOAT_COMPARISON_EPSILON = 0.0001;
 
 function toSnapshotDate(date: Date = new Date()): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function parseSnapshotState(rawState: unknown): SnapshotState {
-  const snapshotState = (rawState || {}) as SnapshotStateLike;
+  const snapshotState = (rawState ?? {}) as SnapshotStateLike;
   const snapshotName =
     typeof snapshotState.name === "string" &&
     snapshotState.name.trim().length > 0
@@ -85,7 +91,7 @@ function parseSnapshotState(rawState: unknown): SnapshotState {
   return {
     name: snapshotName,
     sets: snapshotSets.map((set) => {
-      const snapshotSet = (set || {}) as SnapshotStateSet;
+      const snapshotSet = (set ?? {}) as SnapshotStateSet;
       const reps = Number(snapshotSet.reps);
       const weight = Number(snapshotSet.weight);
 
@@ -266,9 +272,7 @@ async function upsertExercisePerformanceIndex(
     repPrsByWeight[weightKey] = isNewRepPr;
   }
 
-  const nextPerformanceState:
-    | ExercisePerformanceIndexInsert
-    | ExercisePerformanceIndexUpdate = {
+  const nextPerformanceState: ExercisePerformanceIndexInsert = {
     workout_id: workoutId,
     exercise_id: exerciseId,
     total_volume_pr: existingPerformance
@@ -326,7 +330,7 @@ export async function fetchExercisePerformanceBadges(
   }
 
   const stateByExerciseId = new Map<number, ExercisePerformanceIndexState>();
-  (rows || []).forEach((row) => {
+  (rows ?? []).forEach((row) => {
     const parsedState = parseExercisePerformanceIndexState(
       row as PerformanceIndexRowLike,
     );
@@ -337,7 +341,7 @@ export async function fetchExercisePerformanceBadges(
     (accumulator, exercise) => {
       accumulator[exercise.id] = buildPerformanceBadgesForSnapshot(
         exercise.sets,
-        stateByExerciseId.get(exercise.id) || null,
+        stateByExerciseId.get(exercise.id) ?? null,
         snapshotDate,
       );
       return accumulator;
@@ -346,8 +350,13 @@ export async function fetchExercisePerformanceBadges(
   );
 }
 
-function areSnapshotsEqual(left: unknown, right: unknown): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
+function areSnapshotsEqual(left: SnapshotState, right: SnapshotState): boolean {
+  if (left.name !== right.name) return false;
+  if (left.sets.length !== right.sets.length) return false;
+  return left.sets.every(
+    (set, i) =>
+      set.reps === right.sets[i].reps && set.weight === right.sets[i].weight,
+  );
 }
 
 async function createDailySnapshotIfChanged(
@@ -374,10 +383,8 @@ async function createDailySnapshotIfChanged(
   }
 
   if (latestSnapshot?.snapshot_date === today) {
-    if (
-      latestSnapshot.snapshot_state &&
-      areSnapshotsEqual(latestSnapshot.snapshot_state, currentState)
-    ) {
+    const previousState = parseSnapshotState(latestSnapshot.snapshot_state);
+    if (areSnapshotsEqual(previousState, currentState)) {
       return "skipped";
     }
 
@@ -393,11 +400,11 @@ async function createDailySnapshotIfChanged(
     return "updated";
   }
 
-  if (
-    latestSnapshot?.snapshot_state &&
-    areSnapshotsEqual(latestSnapshot.snapshot_state, currentState)
-  ) {
-    return "skipped";
+  if (latestSnapshot?.snapshot_state) {
+    const previousState = parseSnapshotState(latestSnapshot.snapshot_state);
+    if (areSnapshotsEqual(previousState, currentState)) {
+      return "skipped";
+    }
   }
 
   const payload: ExerciseDailySnapshotInsert = {
@@ -423,7 +430,7 @@ async function replaceExerciseSets(
   sets: ExerciseSet[],
 ): Promise<void> {
   const { error: deleteSetsError } = await supabase
-    .from("excercise_set")
+    .from(TABLE_EXERCISE_SET)
     .delete()
     .eq("exercise_id", exerciseId);
 
@@ -442,7 +449,7 @@ async function replaceExerciseSets(
   }));
 
   const { error: insertSetsError } = await supabase
-    .from("excercise_set")
+    .from(TABLE_EXERCISE_SET)
     .insert(insertSetsPayload);
 
   if (insertSetsError) {
@@ -471,7 +478,7 @@ export async function fetchWorkoutExerciseSummaries(
   const exerciseIds = exerciseRows.map((exercise) => exercise.id);
 
   const { data: exerciseSetRows, error: setsError } = await supabase
-    .from("excercise_set")
+    .from(TABLE_EXERCISE_SET)
     .select("exercise_id")
     .in("exercise_id", exerciseIds)
     .order("exercise_id", { ascending: true });
@@ -482,19 +489,19 @@ export async function fetchWorkoutExerciseSummaries(
 
   const setCountsByExerciseId = new Map<number, number>();
 
-  (exerciseSetRows || []).forEach((setRow) => {
+  (exerciseSetRows ?? []).forEach((setRow) => {
     if (!setRow.exercise_id) {
       return;
     }
 
-    const currentCount = setCountsByExerciseId.get(setRow.exercise_id) || 0;
+    const currentCount = setCountsByExerciseId.get(setRow.exercise_id) ?? 0;
     setCountsByExerciseId.set(setRow.exercise_id, currentCount + 1);
   });
 
   return exerciseRows.map((exerciseRow) => ({
     id: exerciseRow.id,
-    name: exerciseRow.name || "Unnamed Exercise",
-    setCount: setCountsByExerciseId.get(exerciseRow.id) || 0,
+    name: exerciseRow.name ?? "Unnamed Exercise",
+    setCount: setCountsByExerciseId.get(exerciseRow.id) ?? 0,
   }));
 }
 
@@ -619,7 +626,7 @@ export async function fetchWorkoutExerciseDetails(
   }
 
   const { data: setRows, error: setRowsError } = await supabase
-    .from("excercise_set")
+    .from(TABLE_EXERCISE_SET)
     .select()
     .eq("exercise_id", exerciseId)
     .order("id", { ascending: true });
@@ -630,7 +637,7 @@ export async function fetchWorkoutExerciseDetails(
 
   return {
     ...toExercise(exerciseRow),
-    sets: (setRows || []).map(toExerciseSet),
+    sets: (setRows ?? []).map(toExerciseSet),
   };
 }
 
@@ -659,7 +666,21 @@ export async function fetchWorkoutName(workoutId: number): Promise<string> {
     throw new Error(error.message);
   }
 
-  return data?.name || "Workout";
+  return data?.name ?? "Workout";
+}
+
+async function saveSnapshotAndPerformance(
+  workoutId: number,
+  exerciseId: number,
+  exerciseName: string,
+  sets: ExerciseSet[],
+): Promise<ExerciseSaveResult> {
+  const [snapshotWriteResult, performanceBadges] = await Promise.all([
+    createDailySnapshotIfChanged(workoutId, exerciseId, exerciseName, sets),
+    upsertExercisePerformanceIndex(workoutId, exerciseId, sets),
+  ]);
+
+  return { snapshotWriteResult, performanceBadges };
 }
 
 export async function createExerciseWithSets(
@@ -680,29 +701,18 @@ export async function createExerciseWithSets(
 
   if (insertExerciseError || !insertedExercise) {
     throw new Error(
-      insertExerciseError?.message || "Failed to create exercise",
+      insertExerciseError?.message ?? "Failed to create exercise",
     );
   }
 
   await replaceExerciseSets(insertedExercise.id, sets);
 
-  const snapshotWriteResult = await createDailySnapshotIfChanged(
+  return saveSnapshotAndPerformance(
     workoutId,
     insertedExercise.id,
     exerciseName,
     sets,
   );
-
-  const performanceBadges = await upsertExercisePerformanceIndex(
-    workoutId,
-    insertedExercise.id,
-    sets,
-  );
-
-  return {
-    snapshotWriteResult,
-    performanceBadges,
-  };
 }
 
 export async function updateExerciseWithSets(
@@ -731,36 +741,25 @@ export async function updateExerciseWithSets(
 
   if (exerciseFetchError || !exerciseRow) {
     throw new Error(
-      exerciseFetchError?.message || "Failed to resolve exercise workout",
+      exerciseFetchError?.message ?? "Failed to resolve exercise workout",
     );
   }
 
   await replaceExerciseSets(exerciseId, sets);
 
-  const snapshotWriteResult = await createDailySnapshotIfChanged(
+  return saveSnapshotAndPerformance(
     exerciseRow.workout_id,
     exerciseId,
     exerciseName,
     sets,
   );
-
-  const performanceBadges = await upsertExercisePerformanceIndex(
-    exerciseRow.workout_id,
-    exerciseId,
-    sets,
-  );
-
-  return {
-    snapshotWriteResult,
-    performanceBadges,
-  };
 }
 
 export async function deleteExerciseWithSets(
   exerciseId: number,
 ): Promise<void> {
   const { error: deleteSetsError } = await supabase
-    .from("excercise_set")
+    .from(TABLE_EXERCISE_SET)
     .delete()
     .eq("exercise_id", exerciseId);
 

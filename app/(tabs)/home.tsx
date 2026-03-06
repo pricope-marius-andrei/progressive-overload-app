@@ -5,10 +5,17 @@
  * Users can view their progress, start workouts, and track different training types.
  */
 
+import { AddWorkoutForm, WelcomeHeader, WorkoutsList } from "@/components";
 import { HomeProvider, useHome } from "@/contexts";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, ScrollView, View } from "react-native";
-import { AddWorkoutForm, WelcomeHeader, WorkoutsList } from "../../components";
+import { RefreshControl, View } from "react-native";
+
+const HomeHeader: React.FC = () => (
+  <View className="mb-5">
+    <WelcomeHeader />
+    <AddWorkoutForm />
+  </View>
+);
 
 const HomeContent: React.FC = () => {
   const { refreshHomeState } = useHome();
@@ -24,19 +31,14 @@ const HomeContent: React.FC = () => {
   }, [refreshHomeState]);
 
   return (
-    <ScrollView
-      className="flex-1"
-      contentContainerStyle={{ flexGrow: 1 }}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-      }
-    >
-      <View className="flex-1 bg-gray-50 px-5 pt-4 pb-2">
-        <WelcomeHeader />
-        <AddWorkoutForm />
-        <WorkoutsList />
-      </View>
-    </ScrollView>
+    <View className="flex-1 bg-gray-50">
+      <WorkoutsList
+        ListHeaderComponent={HomeHeader}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+      />
+    </View>
   );
 };
 

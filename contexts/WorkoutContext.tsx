@@ -5,8 +5,8 @@
  * sets, and exercise operations (add, edit, delete)
  */
 
+import { ApiExercise } from "@/types/api.types";
 import {
-  ApiExercise,
   Exercise,
   ExerciseSet,
   ExerciseSummary,
@@ -17,8 +17,11 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
+import { Alert } from "react-native";
 import { awardXpForNewPrs } from "./home/home.repository";
 import { searchExercises } from "./workout/exercise-search.service";
 import {
@@ -38,7 +41,7 @@ import {
   SnapshotWriteResult,
   updateExerciseWithSets,
 } from "./workout/workout.repository";
-import { WorkoutContextType } from "./workout/workout.types";
+import { WorkoutContextType, XpGainEvent } from "./workout/workout.types";
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
 
@@ -49,6 +52,7 @@ interface WorkoutProviderProps {
 
 const HISTORY_DAYS_LIMIT = 7;
 const SNAPSHOT_WINDOW_DAYS = HISTORY_DAYS_LIMIT + 1;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const countNewPrs = (badges: ExercisePerformanceBadges): number => {
   const repPrCount = Object.values(badges.repPrsByWeight).filter(
@@ -96,13 +100,18 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const [showCustomEntry, setShowCustomEntry] = useState(false);
   const [selectedApiExercise, setSelectedApiExercise] =
     useState<ApiExercise | null>(null);
-  const [xpGainEvent, setXpGainEvent] = useState<{
-    id: number;
-    amount: number;
-  } | null>(null);
+  const [xpGainEvent, setXpGainEvent] = useState<XpGainEvent | null>(null);
 
-  // Generate unique ID
-  const generateId = () => Date.now() + Math.floor(Math.random() * 1000);
+  // Refs for debounce/abort
+  const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const searchAbortControllerRef = useRef<AbortController | null>(null);
+
+  const generateId = useCallback(
+    () => Date.now() + Math.floor(Math.random() * 1000),
+    [],
+  );
   const parsedWorkoutId = Number(workoutId);
   const isHistoryMode = selectedSnapshotDate !== todaySnapshotDate;
 
@@ -168,8 +177,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
       ) {
         setSelectedSnapshotDateState(todaySnapshotDate);
       }
-    } catch (error: any) {
-      console.error("Error fetching workout exercises:", error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching workout exercises:", message);
     }
   }, [parsedWorkoutId, selectedSnapshotDate, todaySnapshotDate]);
 
@@ -182,7 +192,7 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   }, [loadWorkoutExercises]);
 
   useEffect(() => {
-    const loadWorkoutName = async () => {
+    const loadWorkoutNameAsync = async () => {
       if (!Number.isInteger(parsedWorkoutId)) {
         setWorkoutName("Workout");
         return;
@@ -191,89 +201,211 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
       try {
         const name = await fetchWorkoutName(parsedWorkoutId);
         setWorkoutName(name);
-      } catch (error: any) {
-        console.error("Error fetching workout name:", error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Error fetching workout name:", message);
         setWorkoutName("Workout");
       }
     };
 
-    loadWorkoutName();
+    loadWorkoutNameAsync();
   }, [parsedWorkoutId]);
 
-  const handleSearchExercises = async (query: string) => {
+  const handleSearchExercises = useCallback((query: string) => {
+    // Cancel any pending debounce
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+      searchDebounceTimerRef.current = null;
+    }
+
+    // Abort any in-flight request
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort();
+      searchAbortControllerRef.current = null;
+    }
+
     if (query.trim().length < 2) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
 
     setIsSearching(true);
-    try {
-      const results = await searchExercises(query);
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Error searching exercises:", error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
-  const selectApiExercise = (apiExercise: ApiExercise | null) => {
+    searchDebounceTimerRef.current = setTimeout(async () => {
+      const abortController = new AbortController();
+      searchAbortControllerRef.current = abortController;
+
+      try {
+        const results = await searchExercises(query, abortController.signal);
+        if (!abortController.signal.aborted) {
+          setSearchResults(results);
+        }
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        console.error("Error searching exercises:", error);
+        setSearchResults([]);
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsSearching(false);
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  }, []);
+
+  // Cleanup debounce timer and abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+      if (searchAbortControllerRef.current) {
+        searchAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const selectApiExercise = useCallback((apiExercise: ApiExercise | null) => {
     setSelectedApiExercise(apiExercise);
-    setNewExerciseName(apiExercise?.name || "");
-    setSearchQuery(apiExercise?.name || "");
+    setNewExerciseName(apiExercise?.name ?? "");
+    setSearchQuery(apiExercise?.name ?? "");
     setSearchResults([]);
-  };
+  }, []);
 
-  // Set management
-  const addNewSet = () => {
+  const addNewSet = useCallback(() => {
     const newSet: ExerciseSet = {
       id: generateId(),
       reps: 10,
       weight: 50,
     };
     setNewExerciseSets((prev) => [...prev, newSet]);
-  };
+  }, [generateId]);
 
-  const removeSet = (setId: number) => {
+  const removeSet = useCallback((setId: number) => {
     setNewExerciseSets((prev) => prev.filter((set) => set.id !== setId));
-  };
+  }, []);
 
-  const updateSetReps = (setId: number, reps: number) => {
+  const updateSetReps = useCallback((setId: number, reps: number) => {
     setNewExerciseSets((prev) =>
       prev.map((set) => (set.id === setId ? { ...set, reps } : set)),
     );
-  };
+  }, []);
 
-  const updateSetWeight = (setId: number, weight: number) => {
+  const updateSetWeight = useCallback((setId: number, weight: number) => {
     setNewExerciseSets((prev) =>
       prev.map((set) => (set.id === setId ? { ...set, weight } : set)),
     );
-  };
+  }, []);
 
-  // Exercise management
-  const startEditingExercise = async (exerciseId: number) => {
-    if (isHistoryMode) {
-      console.warn("History mode: switch to today to edit exercises.");
-      return;
-    }
+  const resetModalState = useCallback(() => {
+    setNewExerciseName("");
+    setNewExerciseSets([]);
+    setEditingExercise(null);
+    setIsEditMode(false);
+    setIsModalVisible(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearching(false);
+    setShowCustomEntry(false);
+    setSelectedApiExercise(null);
+  }, []);
 
-    const exercise = await loadExerciseDetails(exerciseId);
+  const getExercisePerformanceBadges = useCallback(
+    (exerciseId: number): ExercisePerformanceBadges => {
+      return (
+        exercisePerformanceBadgesById[exerciseId] ??
+        EMPTY_EXERCISE_PERFORMANCE_BADGES
+      );
+    },
+    [exercisePerformanceBadgesById],
+  );
 
-    if (!exercise) {
-      console.error("Failed to load exercise details");
-      return;
-    }
+  const getLoadedExerciseDetails = useCallback(
+    (exerciseId: number): Exercise | null => {
+      return exerciseDetailsById[exerciseId] ?? null;
+    },
+    [exerciseDetailsById],
+  );
 
-    setEditingExercise(exercise);
-    setIsEditMode(true);
-    setNewExerciseName(exercise.name);
-    setNewExerciseSets([...exercise.sets]);
-    setShowCustomEntry(true);
-    setIsModalVisible(true);
-  };
+  const loadExerciseDetails = useCallback(
+    async (exerciseId: number): Promise<Exercise | null> => {
+      const cachedExercise = exerciseDetailsById[exerciseId];
+      if (cachedExercise) {
+        return cachedExercise;
+      }
 
-  const startCreatingExercise = () => {
+      if (!Number.isInteger(parsedWorkoutId)) {
+        return null;
+      }
+
+      try {
+        const exercise = await fetchWorkoutExerciseDetails(
+          parsedWorkoutId,
+          exerciseId,
+          selectedSnapshotDate,
+        );
+
+        if (!exercise) {
+          return null;
+        }
+
+        setExerciseDetailsById((previous) => ({
+          ...previous,
+          [exerciseId]: exercise,
+        }));
+
+        try {
+          const performanceBadges = await fetchExercisePerformanceBadges(
+            parsedWorkoutId,
+            [exercise],
+            selectedSnapshotDate,
+          );
+          setExercisePerformanceBadgesById((previous) => ({
+            ...previous,
+            [exerciseId]:
+              performanceBadges[exerciseId] ??
+              EMPTY_EXERCISE_PERFORMANCE_BADGES,
+          }));
+        } catch (performanceError: unknown) {
+          console.error("Error loading performance badges:", performanceError);
+        }
+
+        return exercise;
+      } catch (error: unknown) {
+        console.error("Error loading exercise details:", error);
+        return null;
+      }
+    },
+    [exerciseDetailsById, parsedWorkoutId, selectedSnapshotDate],
+  );
+
+  const startEditingExercise = useCallback(
+    async (exerciseId: number) => {
+      if (isHistoryMode) {
+        console.warn("History mode: switch to today to edit exercises.");
+        return;
+      }
+
+      const exercise = await loadExerciseDetails(exerciseId);
+
+      if (!exercise) {
+        console.error("Failed to load exercise details");
+        return;
+      }
+
+      setEditingExercise(exercise);
+      setIsEditMode(true);
+      setNewExerciseName(exercise.name);
+      setNewExerciseSets([...exercise.sets]);
+      setShowCustomEntry(true);
+      setIsModalVisible(true);
+    },
+    [isHistoryMode, loadExerciseDetails],
+  );
+
+  const startCreatingExercise = useCallback(() => {
     if (isHistoryMode) {
       console.warn("History mode: switch to today to add exercises.");
       return;
@@ -281,23 +413,27 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
 
     resetModalState();
     setIsModalVisible(true);
-  };
+  }, [isHistoryMode, resetModalState]);
 
-  const removeExercise = async (exercise: ExerciseSummary) => {
-    if (isHistoryMode) {
-      console.warn("History mode: switch to today to remove exercises.");
-      return;
-    }
+  const removeExercise = useCallback(
+    async (exercise: ExerciseSummary) => {
+      if (isHistoryMode) {
+        console.warn("History mode: switch to today to remove exercises.");
+        return;
+      }
 
-    try {
-      await deleteExerciseWithSets(exercise.id);
-      await loadWorkoutExercises();
-    } catch (error) {
-      console.error("Error removing exercise:", error);
-    }
-  };
+      try {
+        await deleteExerciseWithSets(exercise.id);
+        await loadWorkoutExercises();
+      } catch (error: unknown) {
+        console.error("Error removing exercise:", error);
+        Alert.alert("Error", "Failed to remove exercise. Please try again.");
+      }
+    },
+    [isHistoryMode, loadWorkoutExercises],
+  );
 
-  const handleAddNewExercise = async () => {
+  const handleAddNewExercise = useCallback(async () => {
     const trimmedExerciseName = newExerciseName.trim();
     let snapshotWriteResult: SnapshotWriteResult = "skipped";
     let newPrCount = 0;
@@ -326,8 +462,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
         );
         snapshotWriteResult = saveResult.snapshotWriteResult;
         newPrCount = countNewPrs(saveResult.performanceBadges);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error updating exercise:", error);
+        Alert.alert("Error", "Failed to update exercise. Please try again.");
         return;
       }
     } else {
@@ -339,8 +476,9 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
         );
         snapshotWriteResult = saveResult.snapshotWriteResult;
         newPrCount = countNewPrs(saveResult.performanceBadges);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error creating exercise:", error);
+        Alert.alert("Error", "Failed to create exercise. Please try again.");
         return;
       }
     }
@@ -360,133 +498,103 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
         if (awardedXp > 0) {
           setXpGainEvent({ id: Date.now(), amount: awardedXp });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error awarding PR XP:", error);
       }
     }
 
     await loadWorkoutExercises();
     resetModalState();
-  };
-
-  const cancelExerciseCreation = () => {
-    resetModalState();
-  };
-
-  const resetModalState = () => {
-    setNewExerciseName("");
-    setNewExerciseSets([]);
-    setEditingExercise(null);
-    setIsEditMode(false);
-    setIsModalVisible(false);
-    setSearchQuery("");
-    setSearchResults([]);
-    setIsSearching(false);
-    setShowCustomEntry(false);
-    setSelectedApiExercise(null);
-  };
-
-  const getExercisePerformanceBadges = (
-    exerciseId: number,
-  ): ExercisePerformanceBadges => {
-    return (
-      exercisePerformanceBadgesById[exerciseId] ||
-      EMPTY_EXERCISE_PERFORMANCE_BADGES
-    );
-  };
-
-  const getLoadedExerciseDetails = (exerciseId: number): Exercise | null => {
-    return exerciseDetailsById[exerciseId] || null;
-  };
-
-  const loadExerciseDetails = async (
-    exerciseId: number,
-  ): Promise<Exercise | null> => {
-    const cachedExercise = exerciseDetailsById[exerciseId];
-    if (cachedExercise) {
-      return cachedExercise;
-    }
-
-    if (!Number.isInteger(parsedWorkoutId)) {
-      return null;
-    }
-
-    try {
-      const exercise = await fetchWorkoutExerciseDetails(
-        parsedWorkoutId,
-        exerciseId,
-        selectedSnapshotDate,
-      );
-
-      if (!exercise) {
-        return null;
-      }
-
-      setExerciseDetailsById((previous) => ({
-        ...previous,
-        [exerciseId]: exercise,
-      }));
-
-      try {
-        const performanceBadges = await fetchExercisePerformanceBadges(
-          parsedWorkoutId,
-          [exercise],
-          selectedSnapshotDate,
-        );
-        setExercisePerformanceBadgesById((previous) => ({
-          ...previous,
-          [exerciseId]:
-            performanceBadges[exerciseId] || EMPTY_EXERCISE_PERFORMANCE_BADGES,
-        }));
-      } catch (performanceError) {
-        console.error("Error loading performance badges:", performanceError);
-      }
-
-      return exercise;
-    } catch (error) {
-      console.error("Error loading exercise details:", error);
-      return null;
-    }
-  };
-
-  const value: WorkoutContextType = {
-    workoutId,
-    workoutName,
-    workoutExercises,
-    refreshWorkoutState,
-    selectedSnapshotDate,
-    selectableSnapshotDates,
-    getExercisePerformanceBadges,
-    loadExerciseDetails,
-    getLoadedExerciseDetails,
-    isHistoryMode,
-    isModalVisible,
+  }, [
     newExerciseName,
-    newExerciseSets,
-    editingExercise,
+    isHistoryMode,
+    parsedWorkoutId,
     isEditMode,
-    searchQuery,
-    searchResults,
-    isSearching,
-    showCustomEntry,
-    selectedApiExercise,
-    xpGainEvent,
-    setNewExerciseName,
-    setSearchQuery,
-    setSelectedSnapshotDate,
-    startCreatingExercise,
-    startEditingExercise,
-    removeExercise,
-    handleAddNewExercise,
-    cancelExerciseCreation,
-    addNewSet,
-    removeSet,
-    updateSetReps,
-    updateSetWeight,
-    handleSearchExercises,
-    selectApiExercise,
-    setShowCustomEntry,
-  };
+    editingExercise,
+    newExerciseSets,
+    loadWorkoutExercises,
+    resetModalState,
+  ]);
+
+  const cancelExerciseCreation = useCallback(() => {
+    resetModalState();
+  }, [resetModalState]);
+
+  const value: WorkoutContextType = useMemo(
+    () => ({
+      workoutId,
+      workoutName,
+      workoutExercises,
+      refreshWorkoutState,
+      selectedSnapshotDate,
+      selectableSnapshotDates,
+      getExercisePerformanceBadges,
+      loadExerciseDetails,
+      getLoadedExerciseDetails,
+      isHistoryMode,
+      isModalVisible,
+      newExerciseName,
+      newExerciseSets,
+      editingExercise,
+      isEditMode,
+      searchQuery,
+      searchResults,
+      isSearching,
+      showCustomEntry,
+      selectedApiExercise,
+      xpGainEvent,
+      setNewExerciseName,
+      setSearchQuery,
+      setSelectedSnapshotDate,
+      startCreatingExercise,
+      startEditingExercise,
+      removeExercise,
+      handleAddNewExercise,
+      cancelExerciseCreation,
+      addNewSet,
+      removeSet,
+      updateSetReps,
+      updateSetWeight,
+      handleSearchExercises,
+      selectApiExercise,
+      setShowCustomEntry,
+    }),
+    [
+      workoutId,
+      workoutName,
+      workoutExercises,
+      refreshWorkoutState,
+      selectedSnapshotDate,
+      selectableSnapshotDates,
+      getExercisePerformanceBadges,
+      loadExerciseDetails,
+      getLoadedExerciseDetails,
+      isHistoryMode,
+      isModalVisible,
+      newExerciseName,
+      newExerciseSets,
+      editingExercise,
+      isEditMode,
+      searchQuery,
+      searchResults,
+      isSearching,
+      showCustomEntry,
+      selectedApiExercise,
+      xpGainEvent,
+      setSelectedSnapshotDate,
+      startCreatingExercise,
+      startEditingExercise,
+      removeExercise,
+      handleAddNewExercise,
+      cancelExerciseCreation,
+      addNewSet,
+      removeSet,
+      updateSetReps,
+      updateSetWeight,
+      handleSearchExercises,
+      selectApiExercise,
+    ],
+  );
 
   return (
     <WorkoutContext.Provider value={value}>{children}</WorkoutContext.Provider>

@@ -1,5 +1,5 @@
+import { ApiExercise } from "@/types/api.types";
 import {
-    ApiExercise,
     Exercise,
     ExerciseSet,
     ExerciseSummary,
@@ -47,7 +47,7 @@ export interface WorkoutContextType {
   removeSet: (setId: number) => void;
   updateSetReps: (setId: number, reps: number) => void;
   updateSetWeight: (setId: number, weight: number) => void;
-  handleSearchExercises: (query: string) => Promise<void>;
+  handleSearchExercises: (query: string) => void;
   selectApiExercise: (exercise: ApiExercise | null) => void;
   setShowCustomEntry: (show: boolean) => void;
 }

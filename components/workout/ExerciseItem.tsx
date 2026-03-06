@@ -10,6 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 import { getExerciseStats } from "./exercise-stats";
+import ExercisePerformancePanel from "./ExercisePerformancePanel";
 
 interface ExerciseItemProps {
   exercise: ExerciseSummary;
@@ -25,16 +26,13 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
     getLoadedExerciseDetails,
   } = useWorkout();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isPerformanceExpanded, setIsPerformanceExpanded] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   const detailedExercise = getLoadedExerciseDetails(exercise.id);
   const sets = detailedExercise?.sets || [];
   const setLabel = `${exercise.setCount} set${exercise.setCount === 1 ? "" : "s"}`;
-  const { totalVolume, bestSetE1RM, repPrMilestones } = getExerciseStats(sets);
+  const stats = getExerciseStats(sets);
   const performanceBadges = getExercisePerformanceBadges(exercise.id);
-
-  const renderMedal = () => <Ionicons name="medal" size={16} color="#f59e0b" />;
 
   const handleToggleExpand = async () => {
     if (isExpanded) {
@@ -170,107 +168,12 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           ))}
 
           {sets.length > 0 && (
-            <View className="mt-2 rounded-2xl border border-gray-100 bg-gray-50 p-3">
-              <TouchableOpacity
-                className="flex-row items-center justify-between"
-                onPress={() =>
-                  setIsPerformanceExpanded((previous) => !previous)
-                }
-                activeOpacity={0.8}
-              >
-                <Text className="text-gray-900 font-semibold">Performance</Text>
-                <View className="flex-row items-center gap-2">
-                  <View className="rounded-full bg-white border border-gray-200 px-2.5 py-1">
-                    <Text className="text-xs font-medium text-gray-600">
-                      {sets.length} logged set
-                      {sets.length === 1 ? "" : "s"}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={isPerformanceExpanded ? "chevron-up" : "chevron-down"}
-                    size={16}
-                    color="#6b7280"
-                  />
-                </View>
-              </TouchableOpacity>
-
-              {isPerformanceExpanded && (
-                <>
-                  <View className="flex-row gap-2 mb-3 mt-3">
-                    <View className="flex-1 rounded-xl bg-white border border-gray-200 p-3">
-                      <View className="flex-row items-center justify-between">
-                        <Text className="text-[11px] uppercase tracking-wide text-gray-500">
-                          Total Volume
-                        </Text>
-                        {performanceBadges.totalVolume && renderMedal()}
-                      </View>
-                      <Text className="text-lg font-semibold text-gray-900 mt-1">
-                        {totalVolume}
-                        <Text className="text-sm font-medium text-gray-500">
-                          {" "}
-                          kg
-                        </Text>
-                      </Text>
-                    </View>
-                    <View className="flex-1 rounded-xl bg-white border border-gray-200 p-3">
-                      <View className="flex-row items-center justify-between">
-                        <Text className="text-[11px] uppercase tracking-wide text-gray-500">
-                          Best Set e1RM
-                        </Text>
-                        {performanceBadges.bestSetE1RM && renderMedal()}
-                      </View>
-                      <Text className="text-lg font-semibold text-gray-900 mt-1">
-                        {bestSetE1RM.toFixed(1)}
-                        <Text className="text-sm font-medium text-gray-500">
-                          {" "}
-                          kg
-                        </Text>
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text className="text-gray-500 text-xs uppercase tracking-wide mb-2">
-                    Rep PRs
-                  </Text>
-                  {repPrMilestones.length > 0 ? (
-                    <View className="gap-2">
-                      {repPrMilestones.map((milestone) => (
-                        <View
-                          key={`${exercise.id}-${milestone.weight}`}
-                          className="rounded-xl bg-white border border-gray-200 px-3 py-2.5 flex-row items-center justify-between"
-                        >
-                          <View>
-                            <Text className="text-[11px] uppercase tracking-wide text-gray-500">
-                              Weight
-                            </Text>
-                            <View className="flex-row items-center gap-1.5 mt-0.5">
-                              <Text className="text-sm font-semibold text-gray-900">
-                                {milestone.weight} kg
-                              </Text>
-                              {performanceBadges.repPrsByWeight[
-                                String(milestone.weight)
-                              ] && renderMedal()}
-                            </View>
-                          </View>
-                          <View className="items-end">
-                            <Text className="text-[11px] uppercase tracking-wide text-gray-500">
-                              Best Reps
-                            </Text>
-                            <Text className="text-base font-semibold text-gray-900">
-                              {milestone.maxReps}
-                            </Text>
-                          </View>
-                        </View>
-                      ))}
-                    </View>
-                  ) : (
-                    <Text className="text-gray-500 italic">
-                      No valid sets for PRs
-                    </Text>
-                  )}
-                </>
-              )}
-            </View>
+            <ExercisePerformancePanel
+              exerciseId={exercise.id}
+              stats={stats}
+              performanceBadges={performanceBadges}
+              setCount={sets.length}
+            />
           )}
 
           {!isLoadingDetails && sets.length === 0 && (

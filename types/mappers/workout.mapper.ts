@@ -1,10 +1,4 @@
-import { ExerciseRow, ExerciseSetRow, WorkoutRow } from "../entities";
-
-export interface ApiExercise {
-  exerciseId: string;
-  name: string;
-  imageUrl: string;
-}
+import { ExerciseRow, ExerciseSetRow, WorkoutRow } from "@/types/entities";
 
 export interface Workout {
   id: number;
@@ -15,7 +9,7 @@ export interface Workout {
 export function toWorkout(workoutRow: WorkoutRow): Workout {
   return {
     id: workoutRow.id,
-    name: workoutRow.name || "Unnamed Workout",
+    name: workoutRow.name ?? "Unnamed Workout",
     exercises: [], // Placeholder, as exercises would need to be fetched separately
   };
 }
@@ -35,7 +29,7 @@ export interface ExerciseSummary {
 export function toExercise(exerciseRow: ExerciseRow): Exercise {
   return {
     id: exerciseRow.id,
-    name: exerciseRow.name || "Unnamed Exercise",
+    name: exerciseRow.name ?? "Unnamed Exercise",
     sets: [], // Placeholder, as sets would need to be fetched separately
   };
 }
@@ -49,7 +43,7 @@ export interface ExerciseSet {
 export function toExerciseSet(exerciseSetRow: ExerciseSetRow): ExerciseSet {
   return {
     id: exerciseSetRow.id,
-    reps: exerciseSetRow.reps || 0,
-    weight: exerciseSetRow.weight || 0,
+    reps: exerciseSetRow.reps ?? 0,
+    weight: exerciseSetRow.weight ?? 0,
   };
 }

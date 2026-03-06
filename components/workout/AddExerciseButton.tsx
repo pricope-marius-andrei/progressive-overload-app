@@ -5,9 +5,12 @@
  */
 
 import { useWorkout } from "@/contexts/WorkoutContext";
+import { COLORS } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
+
+const DISABLED_COLOR = "#9ca3af";
 
 const AddExerciseButton: React.FC = () => {
   const { startCreatingExercise, isHistoryMode } = useWorkout();
@@ -22,6 +25,11 @@ const AddExerciseButton: React.FC = () => {
       onPress={startCreatingExercise}
       disabled={isHistoryMode}
       activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={
+        isHistoryMode ? "History mode, cannot add exercise" : "Add exercise"
+      }
+      accessibilityState={{ disabled: isHistoryMode }}
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
@@ -33,7 +41,7 @@ const AddExerciseButton: React.FC = () => {
             <Ionicons
               name="add"
               size={20}
-              color={isHistoryMode ? "#9ca3af" : "#6366f1"}
+              color={isHistoryMode ? DISABLED_COLOR : COLORS.primary}
             />
           </View>
 
@@ -60,7 +68,7 @@ const AddExerciseButton: React.FC = () => {
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={isHistoryMode ? "#9ca3af" : "#6366f1"}
+          color={isHistoryMode ? DISABLED_COLOR : COLORS.primary}
         />
       </View>
     </TouchableOpacity>

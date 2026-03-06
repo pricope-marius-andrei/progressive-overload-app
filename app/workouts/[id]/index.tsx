@@ -5,18 +5,20 @@
  * Refactored into reusable components with context-based state management.
  */
 
-import { useWorkout } from "@/contexts/WorkoutContext";
-import React, { useCallback, useMemo } from "react";
-import { PanResponder, View } from "react-native";
 import {
   AddExerciseButton,
   ExerciseModal,
   ExercisesList,
   WorkoutHeader,
   XpGainPopup,
-} from "../../../components";
+} from "@/components";
+import { useWorkout } from "@/contexts/WorkoutContext";
+import React, { useCallback, useMemo, useRef } from "react";
+import { PanResponder, View } from "react-native";
 
 const SWIPE_THRESHOLD = 40;
+const SWIPE_ACTIVATION_DISTANCE = 14;
+const SWIPE_HORIZONTAL_BIAS = 1.2;
 
 const DayWorkoutScreen: React.FC = () => {
   const {
@@ -56,11 +58,17 @@ const DayWorkoutScreen: React.FC = () => {
     [orderedSnapshotDates, selectedSnapshotDate, setSelectedSnapshotDate],
   );
 
+  // Store latest callbacks in refs so PanResponder doesn't need recreation
+  const changeDateBySwipeRef = useRef(changeDateBySwipe);
+  changeDateBySwipeRef.current = changeDateBySwipe;
+  const isModalVisibleRef = useRef(isModalVisible);
+  isModalVisibleRef.current = isModalVisible;
+
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) => {
-          if (isModalVisible) {
+          if (isModalVisibleRef.current) {
             return false;
           }
 
@@ -68,8 +76,8 @@ const DayWorkoutScreen: React.FC = () => {
           const verticalDistance = Math.abs(gestureState.dy);
 
           return (
-            horizontalDistance > 14 &&
-            horizontalDistance > verticalDistance * 1.2
+            horizontalDistance > SWIPE_ACTIVATION_DISTANCE &&
+            horizontalDistance > verticalDistance * SWIPE_HORIZONTAL_BIAS
           );
         },
         onPanResponderRelease: (_, gestureState) => {
@@ -84,14 +92,14 @@ const DayWorkoutScreen: React.FC = () => {
           }
 
           if (gestureState.dx < 0) {
-            changeDateBySwipe("left");
+            changeDateBySwipeRef.current("left");
             return;
           }
 
-          changeDateBySwipe("right");
+          changeDateBySwipeRef.current("right");
         },
       }),
-    [changeDateBySwipe, isModalVisible],
+    [],
   );
 
   return (

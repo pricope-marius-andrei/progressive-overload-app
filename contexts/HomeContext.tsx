@@ -8,25 +8,25 @@
 import { Workout } from "@/types/mappers/workout.mapper";
 import { Href, useRouter } from "expo-router";
 import React, {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
 } from "react";
+import { Alert } from "react-native";
 import {
-  createWorkout,
-  deleteWorkout,
-  fetchAndUpdateAppProgress,
-  fetchWorkouts,
+    createWorkout,
+    deleteWorkout,
+    fetchAndUpdateAppProgress,
+    fetchWorkouts,
 } from "./home/home.repository";
 import { HomeContextType, User } from "./home/home.types";
 
-// Create the context
 const HomeContext = createContext<HomeContextType | undefined>(undefined);
 
-// Provider component
 interface HomeProviderProps {
   children: ReactNode;
 }
@@ -35,20 +35,20 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   const router = useRouter();
 
   const [user, setUser] = useState<User>({
-    username: "Marius",
+    username: "Athlete",
     dailyStreak: 0,
     experienceScore: 0,
   });
 
-  // Workouts state
   const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
 
   const loadWorkouts = useCallback(async () => {
     try {
       const workouts = await fetchWorkouts();
       setWorkoutsList(workouts);
-    } catch (error: any) {
-      console.error("Error fetching workouts:", error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error fetching workouts:", message);
     }
   }, []);
 
@@ -60,8 +60,9 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
         dailyStreak: progress.dailyStreak,
         experienceScore: progress.experienceScore,
       }));
-    } catch (error: any) {
-      console.error("Error refreshing app progress:", error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error refreshing app progress:", message);
     }
 
     await loadWorkouts();
@@ -71,8 +72,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
     refreshHomeState();
   }, [refreshHomeState]);
 
-  // Actions
-  const handleSaveNewWorkout = async (newWorkoutName: string) => {
+  const handleSaveNewWorkout = useCallback(async (newWorkoutName: string) => {
     const trimmedWorkoutName = newWorkoutName.trim();
     if (!trimmedWorkoutName) {
       return;
@@ -81,50 +81,66 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
     try {
       const createdWorkout = await createWorkout(trimmedWorkoutName);
       setWorkoutsList((prev) => [...prev, createdWorkout]);
-    } catch (error: any) {
-      console.error("Error creating workout:", error.message);
-      return;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error creating workout:", message);
+      Alert.alert("Error", "Failed to create workout. Please try again.");
     }
-  };
+  }, []);
 
-  const handleDeleteWorkout = async (workout: Workout) => {
-    const { id, name } = workout;
+  const handleDeleteWorkout = useCallback(
+    async (workout: Workout) => {
+      const { id, name } = workout;
 
-    // Optimistically update UI
-    setWorkoutsList((prev) => prev.filter((item) => item.id !== id));
+      setWorkoutsList((prev) => prev.filter((item) => item.id !== id));
 
-    // Delete from Supabase
-    try {
-      await deleteWorkout(id);
-      console.log(`Workout "${name}" deleted successfully.`);
-    } catch (error: any) {
-      console.error("Error deleting workout:", error.message);
-      await loadWorkouts();
-    }
-  };
+      try {
+        await deleteWorkout(id);
+        console.log(`Workout "${name}" deleted successfully.`);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Error deleting workout:", message);
+        Alert.alert("Error", "Failed to delete workout. Please try again.");
+        await loadWorkouts();
+      }
+    },
+    [loadWorkouts],
+  );
 
-  const navigateToWorkout = (workout: Workout) => {
-    const workoutRoute: Href = {
-      pathname: "/workouts/[id]",
-      params: { id: String(workout.id) },
-    };
+  const navigateToWorkout = useCallback(
+    (workout: Workout) => {
+      const workoutRoute: Href = {
+        pathname: "/workouts/[id]",
+        params: { id: String(workout.id) },
+      };
 
-    router.push(workoutRoute);
-  };
+      router.push(workoutRoute);
+    },
+    [router],
+  );
 
-  const value: HomeContextType = {
-    refreshHomeState,
-    handleDeleteWorkout,
-    handleSaveNewWorkout,
-    navigateToWorkout,
-    user,
-    workoutsList,
-  };
+  const value: HomeContextType = useMemo(
+    () => ({
+      refreshHomeState,
+      handleDeleteWorkout,
+      handleSaveNewWorkout,
+      navigateToWorkout,
+      user,
+      workoutsList,
+    }),
+    [
+      refreshHomeState,
+      handleDeleteWorkout,
+      handleSaveNewWorkout,
+      navigateToWorkout,
+      user,
+      workoutsList,
+    ],
+  );
 
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
 };
 
-// Hook to use the context
 export const useHome = (): HomeContextType => {
   const context = useContext(HomeContext);
   if (context === undefined) {
