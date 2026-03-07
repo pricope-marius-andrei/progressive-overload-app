@@ -219,18 +219,21 @@ export type Database = {
       workout: {
         Row: {
           created_at: string;
+          deleted_at: string | null;
           id: number;
           name: string;
           updated_at: string | null;
         };
         Insert: {
           created_at?: string;
+          deleted_at?: string | null;
           id?: number;
           name: string;
           updated_at?: string | null;
         };
         Update: {
           created_at?: string;
+          deleted_at?: string | null;
           id?: number;
           name?: string;
           updated_at?: string | null;

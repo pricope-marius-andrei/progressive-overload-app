@@ -5,7 +5,12 @@
  * Users can view their progress, start workouts, and track different training types.
  */
 
-import { AddWorkoutForm, WelcomeHeader, WorkoutsList } from "@/components";
+import {
+    AddWorkoutForm,
+    TrainingCalendar,
+    WelcomeHeader,
+    WorkoutsList,
+} from "@/components";
 import { HomeProvider, useHome } from "@/contexts";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, View } from "react-native";
@@ -13,6 +18,7 @@ import { RefreshControl, View } from "react-native";
 const HomeHeader: React.FC = () => (
   <View className="mb-5">
     <WelcomeHeader />
+    <TrainingCalendar />
     <AddWorkoutForm />
   </View>
 );

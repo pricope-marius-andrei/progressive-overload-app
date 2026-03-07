@@ -21,6 +21,7 @@ import {
     createWorkout,
     deleteWorkout,
     fetchAndUpdateAppProgress,
+    fetchTrainingDateKeys,
     fetchWorkouts,
 } from "./home/home.repository";
 import { HomeContextType, User } from "./home/home.types";
@@ -41,6 +42,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   });
 
   const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
+  const [trainingDateKeys, setTrainingDateKeys] = useState<string[]>([]);
 
   const loadWorkouts = useCallback(async () => {
     try {
@@ -53,16 +55,31 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   }, []);
 
   const refreshHomeState = useCallback(async () => {
-    try {
-      const progress = await fetchAndUpdateAppProgress();
+    const [progressResult, trainingDatesResult] = await Promise.allSettled([
+      fetchAndUpdateAppProgress(),
+      fetchTrainingDateKeys(),
+    ]);
+
+    if (progressResult.status === "fulfilled") {
+      const progress = progressResult.value;
       setUser((prev) => ({
         ...prev,
         dailyStreak: progress.dailyStreak,
         experienceScore: progress.experienceScore,
       }));
-    } catch (error: unknown) {
+    } else {
+      const error = progressResult.reason;
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error refreshing app progress:", message);
+    }
+
+    if (trainingDatesResult.status === "fulfilled") {
+      setTrainingDateKeys(trainingDatesResult.value);
+    } else {
+      const error = trainingDatesResult.reason;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error loading training dates:", message);
+      setTrainingDateKeys([]);
     }
 
     await loadWorkouts();
@@ -127,6 +144,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       navigateToWorkout,
       user,
       workoutsList,
+      trainingDateKeys,
     }),
     [
       refreshHomeState,
@@ -135,6 +153,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       navigateToWorkout,
       user,
       workoutsList,
+      trainingDateKeys,
     ],
   );
 

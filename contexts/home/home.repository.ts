@@ -12,6 +12,8 @@ export type AppProgressState = {
   experienceScore: number;
 };
 
+const TRAINING_INACTIVITY_RESET_DAYS = 7;
+
 const getTodayDateKey = (date: Date = new Date()): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -40,6 +42,75 @@ const getMonthDiff = (startDateKey: string, endDateKey: string): number => {
 
   return Math.max(0, endMonthIndex - startMonthIndex);
 };
+
+const getDayDiff = (startDateKey: string, endDateKey: string): number => {
+  const startDate = parseDateKey(startDateKey);
+  const endDate = parseDateKey(endDateKey);
+
+  const startUtc = Date.UTC(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+  );
+  const endUtc = Date.UTC(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate(),
+  );
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  return Math.max(0, Math.floor((endUtc - startUtc) / ONE_DAY_MS));
+};
+
+const sortDateKeysDescending = (left: string, right: string): number => {
+  if (left === right) {
+    return 0;
+  }
+
+  return left < right ? 1 : -1;
+};
+
+function computeTrainingStreak(
+  trainingDateKeys: string[],
+  todayDateKey: string,
+): number {
+  if (trainingDateKeys.length === 0) {
+    return 0;
+  }
+
+  const normalizedDateKeys = [...new Set(trainingDateKeys)].sort(
+    sortDateKeysDescending,
+  );
+  const latestTrainingDateKey = normalizedDateKeys[0];
+
+  if (
+    getDayDiff(latestTrainingDateKey, todayDateKey) >
+    TRAINING_INACTIVITY_RESET_DAYS
+  ) {
+    return 0;
+  }
+
+  let streak = 1;
+  let anchorDateKey = latestTrainingDateKey;
+
+  for (let i = 1; i < normalizedDateKeys.length; i += 1) {
+    const previousDateKey = normalizedDateKeys[i];
+    const dayGap = getDayDiff(previousDateKey, anchorDateKey);
+
+    if (dayGap === 0) {
+      continue;
+    }
+
+    if (dayGap > TRAINING_INACTIVITY_RESET_DAYS) {
+      break;
+    }
+
+    streak += 1;
+    anchorDateKey = previousDateKey;
+  }
+
+  return streak;
+}
 
 async function fetchAppState() {
   const { data, error } = await supabase
@@ -83,13 +154,35 @@ async function ensureAppState(
 }
 
 export async function fetchWorkouts(): Promise<Workout[]> {
-  const { data, error } = await supabase.from("workout").select();
+  const { data, error } = await supabase
+    .from("workout")
+    .select()
+    .is("deleted_at", null);
 
   if (error) {
     throw new Error(error.message);
   }
 
   return (data ?? []).map(toWorkout);
+}
+
+export async function fetchTrainingDateKeys(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("exercise_daily_snapshot")
+    .select("snapshot_date")
+    .order("snapshot_date", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data || data.length === 0) {
+    return [];
+  }
+
+  return [...new Set(data.map((row) => row.snapshot_date))].sort(
+    sortDateKeysDescending,
+  );
 }
 
 export async function createWorkout(workoutName: string): Promise<Workout> {
@@ -111,7 +204,12 @@ export async function createWorkout(workoutName: string): Promise<Workout> {
 }
 
 export async function deleteWorkout(workoutId: number): Promise<void> {
-  const { error } = await supabase.from("workout").delete().eq("id", workoutId);
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase
+    .from("workout")
+    .update({ deleted_at: nowIso, updated_at: nowIso })
+    .eq("id", workoutId)
+    .is("deleted_at", null);
 
   if (error) {
     throw new Error(error.message);
@@ -122,11 +220,15 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   const todayDateKey = getTodayDateKey();
   const currentMonthPeriodKey = getMonthPeriodKey();
 
-  const appState = await fetchAppState();
+  const [appState, trainingDateKeys] = await Promise.all([
+    fetchAppState(),
+    fetchTrainingDateKeys(),
+  ]);
+  const trainingStreak = computeTrainingStreak(trainingDateKeys, todayDateKey);
 
   if (!appState) {
     const created = await ensureAppState({
-      daily_streak: 1,
+      daily_streak: trainingStreak,
       experience_score: DAILY_LOGIN_XP,
       last_open_date: todayDateKey,
       last_monthly_bonus_period: currentMonthPeriodKey,
@@ -139,6 +241,27 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   }
 
   if (appState.last_open_date === todayDateKey) {
+    if (appState.daily_streak !== trainingStreak) {
+      const { data: syncedAppState, error: syncError } = await supabase
+        .from("app_state")
+        .update({
+          daily_streak: trainingStreak,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", APP_STATE_SINGLETON_ID)
+        .select("daily_streak, experience_score")
+        .single();
+
+      if (syncError) {
+        throw new Error(syncError.message);
+      }
+
+      return {
+        dailyStreak: syncedAppState.daily_streak,
+        experienceScore: syncedAppState.experience_score,
+      };
+    }
+
     return {
       dailyStreak: appState.daily_streak,
       experienceScore: appState.experience_score,
@@ -158,7 +281,7 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   );
   const monthlyBonusXp = completedMonths * MONTHLY_BONUS_XP;
 
-  const nextStreak = appState.daily_streak + 1;
+  const nextStreak = trainingStreak;
   const nextExperienceScore =
     (appState.experience_score ?? 0) + DAILY_LOGIN_XP + monthlyBonusXp;
   const { data: updatedAppState, error: updateError } = await supabase

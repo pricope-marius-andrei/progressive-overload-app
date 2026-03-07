@@ -1,22 +1,22 @@
 import { getExerciseStats } from "@/components/workout/exercise-stats";
 import {
-  ExerciseDailySnapshotInsert,
-  ExerciseInsert,
-  ExercisePerformanceIndexInsert,
-  ExerciseSetInsert,
-  ExerciseUpdate,
+    ExerciseDailySnapshotInsert,
+    ExerciseInsert,
+    ExercisePerformanceIndexInsert,
+    ExerciseSetInsert,
+    ExerciseUpdate,
 } from "@/types/entities";
 import {
-  Exercise,
-  ExerciseSet,
-  ExerciseSummary,
-  toExercise,
-  toExerciseSet,
+    Exercise,
+    ExerciseSet,
+    ExerciseSummary,
+    toExercise,
+    toExerciseSet,
 } from "@/types/mappers/workout.mapper";
 import { supabase } from "@/utils/supabase";
 import {
-  EMPTY_EXERCISE_PERFORMANCE_BADGES,
-  ExercisePerformanceBadges,
+    EMPTY_EXERCISE_PERFORMANCE_BADGES,
+    ExercisePerformanceBadges,
 } from "./performance.types";
 
 // Note: table name has a known typo ("excercise" instead of "exercise")
@@ -646,6 +646,7 @@ export async function workoutExists(workoutId: number): Promise<boolean> {
     .from("workout")
     .select("id")
     .eq("id", workoutId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) {
@@ -660,6 +661,7 @@ export async function fetchWorkoutName(workoutId: number): Promise<string> {
     .from("workout")
     .select("name")
     .eq("id", workoutId)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) {

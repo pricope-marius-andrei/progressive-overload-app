@@ -34,7 +34,7 @@ const WelcomeHeader: React.FC = () => {
         </Text>
       </View>
       <Text className="text-gray-500 mt-2 text-sm">
-        Open the app daily to keep your streak growing.
+        Train regularly to keep your streak alive.
       </Text>
     </View>
   );

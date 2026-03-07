@@ -9,6 +9,7 @@ export interface User {
 export interface HomeContextType {
   user: User;
   workoutsList: Workout[];
+  trainingDateKeys: string[];
   refreshHomeState: () => Promise<void>;
   handleSaveNewWorkout: (workoutName: string) => Promise<void>;
   handleDeleteWorkout: (workout: Workout) => Promise<void>;
