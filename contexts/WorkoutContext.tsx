@@ -277,8 +277,8 @@ export const WorkoutProvider: React.FC<WorkoutProviderProps> = ({
   const addNewSet = useCallback(() => {
     const newSet: ExerciseSet = {
       id: generateId(),
-      reps: 10,
-      weight: 50,
+      reps: 0,
+      weight: 0.0,
     };
     setNewExerciseSets((prev) => [...prev, newSet]);
   }, [generateId]);

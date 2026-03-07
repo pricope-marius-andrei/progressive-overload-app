@@ -18,6 +18,12 @@ const SetEditorRow: React.FC<SetEditorRowProps> = ({
   updateSetWeight,
   removeSet,
 }) => {
+  const [weightInput, setWeightInput] = React.useState(set.weight.toString());
+
+  React.useEffect(() => {
+    setWeightInput(set.weight.toString());
+  }, [set.weight]);
+
   const handleConfirmRemove = () => {
     Alert.alert("Remove set?", `Set ${index + 1} will be removed.`, [
       { text: "Cancel", style: "cancel" },
@@ -52,12 +58,32 @@ const SetEditorRow: React.FC<SetEditorRowProps> = ({
           <Text className="text-xs text-gray-500 mb-1">Weight (kg)</Text>
           <TextInput
             className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-2 text-center"
-            value={set.weight.toString()}
+            value={weightInput}
             onChangeText={(text) => {
-              const weight = parseFloat(text) || 0;
-              updateSetWeight(set.id, weight);
+              const normalizedText = text.replace(",", ".");
+
+              // Keep typing natural while restricting invalid numeric characters.
+              if (!/^\d*\.?\d*$/.test(normalizedText)) {
+                return;
+              }
+
+              setWeightInput(normalizedText);
+
+              if (normalizedText === "" || normalizedText === ".") {
+                return;
+              }
+
+              updateSetWeight(set.id, parseFloat(normalizedText));
             }}
-            keyboardType="numeric"
+            onBlur={() => {
+              const parsedWeight = parseFloat(weightInput);
+              const nextWeight = Number.isFinite(parsedWeight)
+                ? parsedWeight
+                : 0;
+              setWeightInput(nextWeight.toString());
+              updateSetWeight(set.id, nextWeight);
+            }}
+            keyboardType="decimal-pad"
             placeholder="50"
           />
         </View>

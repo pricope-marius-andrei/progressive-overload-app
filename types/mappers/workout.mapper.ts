@@ -44,6 +44,6 @@ export function toExerciseSet(exerciseSetRow: ExerciseSetRow): ExerciseSet {
   return {
     id: exerciseSetRow.id,
     reps: exerciseSetRow.reps ?? 0,
-    weight: exerciseSetRow.weight ?? 0,
+    weight: exerciseSetRow.weight ?? 0.0,
   };
 }
