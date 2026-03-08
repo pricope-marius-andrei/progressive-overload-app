@@ -12,9 +12,10 @@ import {
     WelcomeHeader,
     WorkoutsList,
 } from "@/components";
-import { HomeProvider, useHome } from "@/contexts";
+import { HomeProvider, useAuth, useHome } from "@/contexts";
+import { Redirect } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { RefreshControl, View } from "react-native";
+import { ActivityIndicator, RefreshControl, View } from "react-native";
 
 type HomeHeaderProps = {
   onOpenGymPicker: () => void;
@@ -67,6 +68,20 @@ const HomeContent: React.FC = () => {
  * Wrapped with HomeProvider for state management
  */
 const Home: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50">
+        <ActivityIndicator size="small" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/prerequisite" />;
+  }
+
   return (
     <HomeProvider>
       <HomeContent />

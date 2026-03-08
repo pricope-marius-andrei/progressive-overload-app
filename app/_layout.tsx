@@ -1,4 +1,5 @@
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/contexts";
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "./global.css";
@@ -10,13 +11,15 @@ import "./global.css";
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <ErrorBoundary>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-          }}
-        />
-      </ErrorBoundary>
+      <AuthProvider>
+        <ErrorBoundary>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          />
+        </ErrorBoundary>
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

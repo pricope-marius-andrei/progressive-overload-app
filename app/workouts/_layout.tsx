@@ -10,8 +10,10 @@
  * - Automatic device compatibility
  */
 
-import { Stack } from "expo-router";
+import { useAuth } from "@/contexts";
+import { Redirect, Stack } from "expo-router";
 import React from "react";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -19,6 +21,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
  * @returns JSX.Element - SafeArea wrapped workout stack navigation
  */
 export default function WorkoutsLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50">
+        <ActivityIndicator size="small" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/prerequisite" />;
+  }
+
   return (
     <SafeAreaView className="flex-1">
       <Stack

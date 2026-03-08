@@ -10,5 +10,9 @@ export { HomeProvider, useHome } from "./HomeContext";
 
 // Workout context
 export type { WorkoutContextType } from "./workout/workout.types";
-export { useWorkout, WorkoutProvider } from "./WorkoutContext";
+export { WorkoutProvider, useWorkout } from "./WorkoutContext";
+
+// Auth context
+export type { AuthContextType } from "./auth/auth.types";
+export { AuthProvider, useAuth } from "./AuthContext";
 

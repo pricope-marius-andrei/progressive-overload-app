@@ -35,7 +35,7 @@ Notable experiments enabled in `app.json`:
 │              components/ErrorBoundary            │
 ├─────────────────────────────────────────────────┤
 │              Context Providers                   │
-│       HomeContext  ·  WorkoutContext              │
+│   AuthContext  ·  HomeContext  ·  WorkoutContext  │
 │    (useCallback / useMemo memoized values)       │
 ├─────────────────────────────────────────────────┤
 │                Repositories                      │
@@ -53,6 +53,7 @@ Notable experiments enabled in `app.json`:
 ### Key Patterns
 
 - **Repository pattern** - All Supabase queries live in `*.repository.ts` files, never in components or contexts directly.
+- **Auth context and route gating** - `AuthContext` restores persisted Supabase sessions, handles Google OAuth, and gates protected routes before data repositories run.
 - **Three-layer type system** - Auto-generated `database.types.ts` → convenience aliases in `entities.ts` → domain models in `mappers/*.ts` with mapping functions (`toWorkout`, `toExercise`, `toExerciseSet`).
 - **Context with memoization** - Both `HomeContext` and `WorkoutContext` wrap all callbacks in `useCallback` and memoize the context value object with `useMemo` to prevent unnecessary re-renders.
 - **Debounce + AbortController** - Exercise search API calls are debounced (300ms) and previous in-flight requests are aborted when new searches start.
@@ -71,7 +72,7 @@ progressive-overload-app/
 │   ├── (tabs)/                   # Bottom tab navigator group
 │   │   ├── _layout.tsx           # Tab layout (Home + Profile tabs)
 │   │   ├── home.tsx              # Home screen (workouts dashboard)
-│   │   └── profile.tsx           # Profile screen (coming soon placeholder)
+│   │   └── profile.tsx           # Profile/account screen (sign out)
 │   └── workouts/
 │       ├── _layout.tsx           # Workouts stack layout (SafeAreaView)
 │       └── [id]/
@@ -81,6 +82,9 @@ progressive-overload-app/
 ├── components/
 │   ├── index.ts                  # Barrel export for all components
 │   ├── ErrorBoundary.tsx         # Root-level error boundary with recovery UI
+│   ├── auth/
+│   │   ├── index.ts              # Auth component barrel export
+│   │   └── AuthRequired.tsx      # Shared sign-in required screen
 │   ├── home/
 │   │   ├── index.ts              # Barrel export
 │   │   ├── WelcomeHeader.tsx     # User greeting with streak/XP display
@@ -102,9 +106,12 @@ progressive-overload-app/
 │       └── exercise-stats.ts     # Pure functions for volume/e1RM/rep PR calculation
 │
 ├── contexts/
-│   ├── index.ts                  # Barrel export (HomeProvider, WorkoutProvider, hooks)
+│   ├── index.ts                  # Barrel export (Auth, Home, Workout providers/hooks)
+│   ├── AuthContext.tsx           # Supabase session + Google OAuth + sign-out
 │   ├── HomeContext.tsx            # Home screen state (user, workouts, navigation)
 │   ├── WorkoutContext.tsx         # Workout screen state (exercises, sets, modal, search)
+│   ├── auth/
+│   │   └── auth.types.ts         # AuthContextType interface
 │   ├── home/
 │   │   ├── home.types.ts         # HomeContextType, User interfaces
 │   │   └── home.repository.ts    # Supabase queries: workouts CRUD, app state, XP
@@ -210,11 +217,12 @@ Expo Router file-based routing with typed routes:
 
 | Route | Screen | Context |
 |---|---|---|
-| `/(tabs)/home` | Home dashboard | `HomeProvider` |
-| `/(tabs)/profile` | Profile (placeholder) | None |
-| `/workouts/[id]` | Workout detail | `WorkoutProvider` (injected by `[id]/_layout.tsx`) |
+| `/(tabs)/home` | Home dashboard | `AuthProvider` + `HomeProvider` |
+| `/(tabs)/profile` | Profile/account | `AuthProvider` |
+| `/workouts/[id]` | Workout detail | `AuthProvider` + `WorkoutProvider` (injected by `[id]/_layout.tsx`) |
 
 The `[id]/_layout.tsx` validates the workout ID exists in the database before rendering the `WorkoutProvider`. Invalid IDs show an error state.
+When no session exists, Home/Profile/Workout routes render a sign-in gate.
 
 ## Environment Variables
 
@@ -233,6 +241,20 @@ EXPO_PUBLIC_RAPIDAPI_KEY=your-rapidapi-key
 | `EXPO_PUBLIC_RAPIDAPI_KEY` | RapidAPI key for exercise search API |
 
 The Supabase client validates these at startup and throws if missing.
+
+## Authentication Setup (Google + Supabase)
+
+1. In Supabase Dashboard, enable Google provider in `Authentication > Providers > Google`.
+2. In Google Cloud Console, configure OAuth consent and create OAuth client credentials for your app.
+3. In Supabase `Authentication > URL Configuration`, add redirect URLs:
+	- `progressiveoverloadapp://auth/callback`
+	- `http://localhost:8081/auth/callback` (Expo local development)
+4. Keep `app.json` scheme set to `progressiveoverloadapp`.
+5. Launch the app and sign in from Home/Profile screens.
+
+Notes:
+- Session persistence is enabled through AsyncStorage in the Supabase client.
+- Current workout schema is not user-scoped yet (no `user_id` ownership columns), so auth controls access flow but does not isolate rows per user until RLS and ownership fields are added.
 
 ## Scripts
 

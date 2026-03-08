@@ -6,7 +6,6 @@ import {
 import { Workout, toWorkout } from "@/types/mappers/workout.mapper";
 import { supabase } from "@/utils/supabase";
 
-const APP_STATE_SINGLETON_ID = 1;
 const DAILY_LOGIN_XP = 100;
 const XP_PER_NEW_PR = 5;
 const MONTHLY_BONUS_XP = 200;
@@ -248,7 +247,6 @@ async function fetchAppState() {
   const { data, error } = await supabase
     .from("app_state")
     .select("*")
-    .eq("id", APP_STATE_SINGLETON_ID)
     .maybeSingle();
 
   if (error) {
@@ -262,7 +260,6 @@ async function ensureAppState(
   overrides: Partial<AppStateMutation> = {},
 ): Promise<AppStateRecord> {
   const payload: AppStateMutation = {
-    id: APP_STATE_SINGLETON_ID,
     daily_streak: 0,
     experience_score: 0,
     last_open_date: null,
@@ -337,7 +334,7 @@ export async function saveGymLocationSettings(input: {
   const { data, error } = await supabase
     .from("app_state")
     .update(updatePayload as AppStateInsert)
-    .eq("id", APP_STATE_SINGLETON_ID)
+    .eq("id", appState.id)
     .select("*")
     .single();
 
@@ -594,7 +591,7 @@ export async function fetchAndUpdateAppProgress(
           last_gym_checkin_date: nextLastGymCheckinDate,
           updated_at: nowIso,
         })
-        .eq("id", APP_STATE_SINGLETON_ID)
+        .eq("id", appState.id)
         .select("daily_streak, experience_score")
         .single();
 
@@ -642,7 +639,7 @@ export async function fetchAndUpdateAppProgress(
           : appState.last_monthly_bonus_period,
       updated_at: nowIso,
     })
-    .eq("id", APP_STATE_SINGLETON_ID)
+    .eq("id", appState.id)
     .select("daily_streak, experience_score")
     .single();
 
@@ -683,7 +680,7 @@ export async function awardXpForNewPrs(newPrCount: number): Promise<number> {
       experience_score: nextExperienceScore,
       updated_at: nowIsoString,
     })
-    .eq("id", APP_STATE_SINGLETON_ID);
+    .eq("id", appState.id);
 
   if (updateError) {
     throw new Error(updateError.message);

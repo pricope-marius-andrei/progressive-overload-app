@@ -28,6 +28,7 @@ export type Database = {
           last_monthly_bonus_period: string | null
           last_open_date: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -42,6 +43,7 @@ export type Database = {
           last_monthly_bonus_period?: string | null
           last_open_date?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -56,6 +58,7 @@ export type Database = {
           last_monthly_bonus_period?: string | null
           last_open_date?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -66,6 +69,7 @@ export type Database = {
           id: number
           reps: number | null
           updated_at: string
+          user_id: string | null
           weight: number | null
         }
         Insert: {
@@ -74,6 +78,7 @@ export type Database = {
           id?: number
           reps?: number | null
           updated_at?: string
+          user_id?: string | null
           weight?: number | null
         }
         Update: {
@@ -82,6 +87,7 @@ export type Database = {
           id?: number
           reps?: number | null
           updated_at?: string
+          user_id?: string | null
           weight?: number | null
         }
         Relationships: [
@@ -101,6 +107,7 @@ export type Database = {
           id: number
           name: string
           updated_at: string
+          user_id: string | null
           workout_id: number
         }
         Insert: {
@@ -109,6 +116,7 @@ export type Database = {
           id?: number
           name: string
           updated_at?: string
+          user_id?: string | null
           workout_id: number
         }
         Update: {
@@ -117,6 +125,7 @@ export type Database = {
           id?: number
           name?: string
           updated_at?: string
+          user_id?: string | null
           workout_id?: number
         }
         Relationships: [
@@ -137,6 +146,7 @@ export type Database = {
           snapshot_date: string
           snapshot_state: Json
           updated_at: string
+          user_id: string | null
           workout_id: number
         }
         Insert: {
@@ -146,6 +156,7 @@ export type Database = {
           snapshot_date?: string
           snapshot_state: Json
           updated_at?: string
+          user_id?: string | null
           workout_id: number
         }
         Update: {
@@ -155,6 +166,7 @@ export type Database = {
           snapshot_date?: string
           snapshot_state?: Json
           updated_at?: string
+          user_id?: string | null
           workout_id?: number
         }
         Relationships: [
@@ -186,6 +198,7 @@ export type Database = {
           total_volume_pr: number
           total_volume_pr_date: string | null
           updated_at: string
+          user_id: string | null
           workout_id: number
         }
         Insert: {
@@ -199,6 +212,7 @@ export type Database = {
           total_volume_pr?: number
           total_volume_pr_date?: string | null
           updated_at?: string
+          user_id?: string | null
           workout_id: number
         }
         Update: {
@@ -212,6 +226,7 @@ export type Database = {
           total_volume_pr?: number
           total_volume_pr_date?: string | null
           updated_at?: string
+          user_id?: string | null
           workout_id?: number
         }
         Relationships: [
@@ -239,6 +254,7 @@ export type Database = {
           longitude: number
           name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -247,6 +263,7 @@ export type Database = {
           longitude: number
           name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -255,6 +272,7 @@ export type Database = {
           longitude?: number
           name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -265,6 +283,7 @@ export type Database = {
           id: number
           name: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -272,6 +291,7 @@ export type Database = {
           id?: number
           name: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -279,6 +299,7 @@ export type Database = {
           id?: number
           name?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

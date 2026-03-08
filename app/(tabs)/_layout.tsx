@@ -12,8 +12,10 @@
  * - Indigo color theme for active tabs
  */
 
+import { useAuth } from "@/contexts";
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
+import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /**
@@ -22,6 +24,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
  * @returns JSX.Element - The tab navigation component with SafeArea support
  */
 export default function TabLayout() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-gray-50">
+        <ActivityIndicator size="small" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/prerequisite" />;
+  }
+
   return (
     <SafeAreaView className="flex-1">
       <Tabs

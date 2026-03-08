@@ -1,10 +1,11 @@
-import { WorkoutProvider } from "@/contexts";
+import { useAuth, WorkoutProvider } from "@/contexts";
 import { workoutExists } from "@/contexts/workout/workout.repository";
-import { Slot, useLocalSearchParams } from "expo-router";
+import { Redirect, Slot, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 const WorkoutIdLayout: React.FC = () => {
+  const { isAuthenticated, isLoading } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const workoutId = Array.isArray(id) ? id[0] : id;
   const parsedWorkoutId = Number(workoutId);
@@ -12,6 +13,11 @@ const WorkoutIdLayout: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+
+    if (!isAuthenticated) {
+      setIsValidWorkout(null);
+      return;
+    }
 
     if (!workoutId || !Number.isInteger(parsedWorkoutId)) {
       setIsValidWorkout(false);
@@ -39,7 +45,19 @@ const WorkoutIdLayout: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [parsedWorkoutId, workoutId]);
+  }, [isAuthenticated, parsedWorkoutId, workoutId]);
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
+        <ActivityIndicator size="small" color="#2563eb" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href="/auth/prerequisite" />;
+  }
 
   if (isValidWorkout === null) {
     return (

@@ -4,6 +4,9 @@
  * Centralized exports for all reusable components organized by screen
  */
 
+// Auth components
+export { AuthRequired } from "./auth";
+
 // Home screen components
 export {
     AddWorkoutForm,
