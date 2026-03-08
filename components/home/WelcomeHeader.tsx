@@ -15,7 +15,7 @@ type WelcomeHeaderProps = {
 
 const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ onOpenGymPicker }) => {
   const { user } = useHome();
-  const gymNameLabel = user.gymName?.trim() || "Set gym";
+  const gymNameLabel = user.gymName?.trim() || "Go to the gym";
 
   return (
     <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">

@@ -22,7 +22,6 @@ import {
   createWorkout,
   deleteWorkout,
   fetchAndUpdateAppProgress,
-  fetchGymLocationSettings,
   fetchTrainingDateKeys,
   fetchWorkouts,
 } from "./home/home.repository";
@@ -59,17 +58,11 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
 
   const refreshHomeState = useCallback(async () => {
     let deviceLocation: { latitude: number; longitude: number } | null = null;
-    let gymName: string | null = null;
 
     try {
-      const gymSettings = await fetchGymLocationSettings();
-      gymName = gymSettings.gymName;
-      if (gymSettings.hasGymLocation) {
-        deviceLocation = await getCurrentDeviceCoordinates();
-      }
+      deviceLocation = await getCurrentDeviceCoordinates();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error loading gym settings:", message);
+      console.error("Error loading device location:", error);
     }
 
     const [progressResult, trainingDatesResult] = await Promise.allSettled([
@@ -81,7 +74,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       const progress = progressResult.value;
       setUser((prev) => ({
         ...prev,
-        gymName,
+        gymName: progress.currentGymName,
         dailyStreak: progress.dailyStreak,
         experienceScore: progress.experienceScore,
       }));
@@ -89,7 +82,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       const error = progressResult.reason;
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error refreshing app progress:", message);
-      setUser((prev) => ({ ...prev, gymName }));
+      setUser((prev) => ({ ...prev, gymName: null }));
     }
 
     if (trainingDatesResult.status === "fulfilled") {

@@ -1,15 +1,23 @@
 import { findNearbyGyms, NearbyGym } from "@/contexts/home/gym-search.service";
 import {
-    fetchGymLocationSettings,
+    deleteKnownGymPlace,
+    fetchMyGyms,
     fetchNearbyKnownGyms,
-    saveGymLocationSettings,
+    SavedGymPlace,
     saveKnownGymPlace,
 } from "@/contexts/home/home.repository";
 import { getCurrentDeviceCoordinates } from "@/utils/location";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import {
     ActivityIndicator,
     Alert,
+    LayoutChangeEvent,
     Modal,
     Platform,
     Pressable,
@@ -26,22 +34,29 @@ type GymPickerModalProps = {
   onSaved?: () => Promise<void> | void;
 };
 
-type SelectableGym = {
+type DiscoverableGym = {
   id: string;
   name: string;
   latitude: number;
   longitude: number;
   distanceMeters: number;
   address: string | null;
-  source: "openstreetmap" | "community";
+  source: "openstreetmap" | "saved";
 };
 
-const DEFAULT_RADIUS_METERS = 120;
-const NEARBY_GYM_SEARCH_RADIUS_METERS = 3000;
+type FocusedGym = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+};
 
-function dedupeGyms(gyms: SelectableGym[]): SelectableGym[] {
+const NEARBY_GYM_SEARCH_RADIUS_METERS = 3000;
+const FOCUSED_PIN_COLOR = "#6366f1";
+
+function dedupeGyms(gyms: DiscoverableGym[]): DiscoverableGym[] {
   const seen = new Set<string>();
-  const deduped: SelectableGym[] = [];
+  const deduped: DiscoverableGym[] = [];
 
   for (const gym of gyms) {
     const key = `${gym.name.toLowerCase()}|${gym.latitude.toFixed(4)}|${gym.longitude.toFixed(4)}`;
@@ -65,40 +80,64 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedRadiusMeters, setSavedRadiusMeters] = useState(
-    DEFAULT_RADIUS_METERS,
-  );
   const [customGymName, setCustomGymName] = useState("");
   const [deviceCoordinates, setDeviceCoordinates] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [nearbyGyms, setNearbyGyms] = useState<SelectableGym[]>([]);
-  const [selectedGymId, setSelectedGymId] = useState<string | null>(null);
-
-  const selectedGym = useMemo(
-    () => nearbyGyms.find((gym) => gym.id === selectedGymId) ?? null,
-    [nearbyGyms, selectedGymId],
-  );
+  const [nearbyGyms, setNearbyGyms] = useState<DiscoverableGym[]>([]);
+  const [myGyms, setMyGyms] = useState<SavedGymPlace[]>([]);
+  const [focusedGym, setFocusedGym] = useState<FocusedGym | null>(null);
+  const mapRef = useRef<MapView | null>(null);
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const mapSectionTopRef = useRef(0);
 
   const mapCenter = useMemo(() => {
-    if (selectedGym) {
+    if (focusedGym) {
       return {
-        latitude: selectedGym.latitude,
-        longitude: selectedGym.longitude,
+        latitude: focusedGym.latitude,
+        longitude: focusedGym.longitude,
       };
     }
 
-    return deviceCoordinates;
-  }, [deviceCoordinates, selectedGym]);
+    if (deviceCoordinates) {
+      return {
+        latitude: deviceCoordinates.latitude,
+        longitude: deviceCoordinates.longitude,
+      };
+    }
+
+    return nearbyGyms[0]
+      ? {
+          latitude: nearbyGyms[0].latitude,
+          longitude: nearbyGyms[0].longitude,
+        }
+      : null;
+  }, [deviceCoordinates, focusedGym, nearbyGyms]);
+
+  const focusMapOnGym = useCallback((gym: FocusedGym) => {
+    const nextRegion = {
+      latitude: gym.latitude,
+      longitude: gym.longitude,
+      latitudeDelta: 0.015,
+      longitudeDelta: 0.015,
+    };
+
+    setFocusedGym(gym);
+    scrollViewRef.current?.scrollTo({
+      y: Math.max(0, mapSectionTopRef.current - 8),
+      animated: true,
+    });
+    mapRef.current?.animateToRegion(nextRegion, 450);
+  }, []);
+
+  const handleMapSectionLayout = useCallback((event: LayoutChangeEvent) => {
+    mapSectionTopRef.current = event.nativeEvent.layout.y;
+  }, []);
 
   const loadNearbyGyms = useCallback(async () => {
     setIsLoading(true);
     try {
-      const currentGymSettings = await fetchGymLocationSettings();
-      setSavedRadiusMeters(currentGymSettings.radiusMeters);
-      setCustomGymName(currentGymSettings.gymName ?? "");
-
       const coordinates = await getCurrentDeviceCoordinates();
       if (!coordinates) {
         Alert.alert(
@@ -110,20 +149,22 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
 
       setDeviceCoordinates(coordinates);
 
-      const [openStreetGyms, knownGyms] = await Promise.all([
-        findNearbyGyms({
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          radiusMeters: NEARBY_GYM_SEARCH_RADIUS_METERS,
-        }),
-        fetchNearbyKnownGyms({
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          radiusMeters: NEARBY_GYM_SEARCH_RADIUS_METERS,
-        }),
-      ]);
+      const [openStreetGyms, nearbySavedGyms, savedGymsList] =
+        await Promise.all([
+          findNearbyGyms({
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            radiusMeters: NEARBY_GYM_SEARCH_RADIUS_METERS,
+          }),
+          fetchNearbyKnownGyms({
+            latitude: coordinates.latitude,
+            longitude: coordinates.longitude,
+            radiusMeters: NEARBY_GYM_SEARCH_RADIUS_METERS,
+          }),
+          fetchMyGyms(),
+        ]);
 
-      const normalizedOpenStreetGyms: SelectableGym[] = openStreetGyms.map(
+      const normalizedOpenStreetGyms: DiscoverableGym[] = openStreetGyms.map(
         (gym: NearbyGym) => ({
           id: `osm:${gym.id}`,
           name: gym.name,
@@ -135,50 +176,25 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         }),
       );
 
-      const normalizedKnownGyms: SelectableGym[] = knownGyms.map((gym) => ({
-        id: `community:${gym.id}`,
-        name: gym.name,
-        latitude: gym.latitude,
-        longitude: gym.longitude,
-        distanceMeters: gym.distanceMeters,
-        address: "Provided by app users",
-        source: "community",
-      }));
+      const normalizedSavedGyms: DiscoverableGym[] = nearbySavedGyms.map(
+        (gym) => ({
+          id: `saved:${gym.id}`,
+          name: gym.name,
+          latitude: gym.latitude,
+          longitude: gym.longitude,
+          distanceMeters: gym.distanceMeters,
+          address: "Saved in your gyms list",
+          source: "saved",
+        }),
+      );
 
       const dedupedGyms = dedupeGyms([
-        ...normalizedKnownGyms,
+        ...normalizedSavedGyms,
         ...normalizedOpenStreetGyms,
       ]);
 
       setNearbyGyms(dedupedGyms);
-      setSelectedGymId((previousGymId) => {
-        if (
-          previousGymId &&
-          dedupedGyms.some((gym) => gym.id === previousGymId)
-        ) {
-          return previousGymId;
-        }
-
-        if (
-          Number.isFinite(currentGymSettings.latitude) &&
-          Number.isFinite(currentGymSettings.longitude)
-        ) {
-          const matchedSavedGym = dedupedGyms.find(
-            (gym) =>
-              Math.abs(gym.latitude - (currentGymSettings.latitude as number)) <
-                0.0002 &&
-              Math.abs(
-                gym.longitude - (currentGymSettings.longitude as number),
-              ) < 0.0002,
-          );
-
-          if (matchedSavedGym) {
-            return matchedSavedGym.id;
-          }
-        }
-
-        return dedupedGyms[0]?.id ?? null;
-      });
+      setMyGyms(savedGymsList);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error loading nearby gyms:", message);
@@ -196,43 +212,35 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
     void loadNearbyGyms();
   }, [loadNearbyGyms, visible]);
 
-  const handleSaveSelectedGym = useCallback(async () => {
-    const selectedGymName = selectedGym?.name?.trim();
-
-    if (!selectedGym || !selectedGymName) {
-      Alert.alert("Select a Gym", "Select one gym from the map or list first.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await saveKnownGymPlace({
-        name: selectedGymName,
-        latitude: selectedGym.latitude,
-        longitude: selectedGym.longitude,
-      });
-
-      await saveGymLocationSettings({
-        latitude: selectedGym.latitude,
-        longitude: selectedGym.longitude,
-        radiusMeters: savedRadiusMeters,
-        gymName: selectedGymName,
-      });
-
-      if (onSaved) {
-        await onSaved();
+  const handleAddGymToList = useCallback(
+    async (gym: DiscoverableGym) => {
+      if (gym.source === "saved") {
+        return;
       }
 
-      Alert.alert("Saved", `Gym saved as ${selectedGymName}.`);
-      onClose();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error saving selected gym:", message);
-      Alert.alert("Error", "Unable to save selected gym.");
-    } finally {
-      setIsSaving(false);
-    }
-  }, [onClose, onSaved, savedRadiusMeters, selectedGym]);
+      setIsSaving(true);
+      try {
+        await saveKnownGymPlace({
+          name: gym.name,
+          latitude: gym.latitude,
+          longitude: gym.longitude,
+        });
+
+        if (onSaved) {
+          await onSaved();
+        }
+
+        await loadNearbyGyms();
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Error adding gym to list:", message);
+        Alert.alert("Error", "Unable to add this gym to your list.");
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [loadNearbyGyms, onSaved],
+  );
 
   const handleSaveCurrentLocationGym = useCallback(async () => {
     const normalizedGymName = customGymName.trim();
@@ -262,19 +270,13 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         longitude: latestCoordinates.longitude,
       });
 
-      await saveGymLocationSettings({
-        latitude: latestCoordinates.latitude,
-        longitude: latestCoordinates.longitude,
-        radiusMeters: savedRadiusMeters,
-        gymName: normalizedGymName,
-      });
-
       if (onSaved) {
         await onSaved();
       }
 
-      Alert.alert("Saved", `Gym saved as ${normalizedGymName}.`);
-      onClose();
+      await loadNearbyGyms();
+      setCustomGymName("");
+      Alert.alert("Saved", `${normalizedGymName} added to your gyms list.`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error saving current-location gym:", message);
@@ -282,7 +284,44 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
     } finally {
       setIsSaving(false);
     }
-  }, [customGymName, deviceCoordinates, onClose, onSaved, savedRadiusMeters]);
+  }, [customGymName, deviceCoordinates, loadNearbyGyms, onSaved]);
+
+  const handleRemoveGym = useCallback(
+    (gym: SavedGymPlace) => {
+      Alert.alert("Remove gym", `Remove ${gym.name} from My Gyms?`, [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              setIsSaving(true);
+              try {
+                await deleteKnownGymPlace(gym.id);
+
+                if (onSaved) {
+                  await onSaved();
+                }
+
+                await loadNearbyGyms();
+              } catch (error: unknown) {
+                const message =
+                  error instanceof Error ? error.message : String(error);
+                console.error("Error removing gym:", message);
+                Alert.alert("Error", "Unable to remove gym.");
+              } finally {
+                setIsSaving(false);
+              }
+            })();
+          },
+        },
+      ]);
+    },
+    [loadNearbyGyms, onSaved],
+  );
 
   return (
     <Modal
@@ -293,31 +332,25 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
     >
       <View className="flex-1 bg-gray-50">
         <View className="px-5 pt-5 pb-3 flex-row items-center justify-between bg-white border-b border-gray-100">
-          <Text className="text-xl font-bold text-gray-900">
-            Select Your Gym
-          </Text>
+          <Text className="text-xl font-bold text-gray-900">Nearby Gyms</Text>
           <Pressable onPress={onClose}>
             <Text className="text-primary font-semibold">Close</Text>
           </Pressable>
         </View>
 
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         >
-          <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
-            <Text className="text-xs text-gray-500">
-              Save any selected marker as your gym.
-            </Text>
-            <Text className="text-xs text-gray-500 mt-1">
-              Community markers are gyms learned from previous users.
-            </Text>
-          </View>
-
           {Platform.OS !== "web" ? (
-            <View className="rounded-2xl overflow-hidden border border-gray-200 mb-4 bg-white">
+            <View
+              className="rounded-2xl overflow-hidden border border-gray-200 mb-4 bg-white"
+              onLayout={handleMapSectionLayout}
+            >
               {mapCenter ? (
                 <MapView
+                  ref={mapRef}
                   style={{ width: "100%", height: 290 }}
                   region={{
                     latitude: mapCenter.latitude,
@@ -346,15 +379,27 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
                         gym.address ?? `${gym.distanceMeters} m away`
                       }
                       pinColor={
-                        selectedGymId === gym.id
-                          ? "#dc2626"
-                          : gym.source === "community"
+                        focusedGym?.id === gym.id
+                          ? FOCUSED_PIN_COLOR
+                          : gym.source === "saved"
                             ? "#16a34a"
-                            : "#f59e0b"
+                            : "#6366f1"
                       }
-                      onPress={() => setSelectedGymId(gym.id)}
                     />
                   ))}
+
+                  {focusedGym &&
+                  !nearbyGyms.some((gym) => gym.id === focusedGym.id) ? (
+                    <Marker
+                      coordinate={{
+                        latitude: focusedGym.latitude,
+                        longitude: focusedGym.longitude,
+                      }}
+                      title={focusedGym.name}
+                      description="Focused gym"
+                      pinColor={FOCUSED_PIN_COLOR}
+                    />
+                  ) : null}
                 </MapView>
               ) : (
                 <View
@@ -368,10 +413,13 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
               )}
             </View>
           ) : (
-            <View className="rounded-2xl border border-gray-200 bg-white px-4 py-3 mb-4">
+            <View
+              className="rounded-2xl border border-gray-200 bg-white px-4 py-3 mb-4"
+              onLayout={handleMapSectionLayout}
+            >
               <Text className="text-sm text-gray-600">
-                Map preview is available on iOS/Android. You can still select
-                from nearby gyms below.
+                Map preview is available on iOS/Android. You can still browse
+                nearby gyms below.
               </Text>
             </View>
           )}
@@ -392,56 +440,124 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
             </Pressable>
           </View>
 
+          <View className="mb-4 rounded-2xl border border-gray-100 bg-white p-4">
+            <Text className="text-sm font-semibold text-gray-900 mb-2">
+              My Gyms
+            </Text>
+
+            {myGyms.length === 0 ? (
+              <Text className="text-sm text-gray-600">
+                No gyms saved yet. Add from nearby gyms or save your current
+                location.
+              </Text>
+            ) : (
+              myGyms.map((gym) => (
+                <View
+                  key={`my-gym:${gym.id}`}
+                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 mb-2"
+                >
+                  <Pressable
+                    onPress={() =>
+                      focusMapOnGym({
+                        id: `saved:${gym.id}`,
+                        name: gym.name,
+                        latitude: gym.latitude,
+                        longitude: gym.longitude,
+                      })
+                    }
+                  >
+                    <Text className="font-semibold text-gray-900">
+                      {gym.name}
+                    </Text>
+                    <Text className="text-xs text-primary mt-1">
+                      Tap to focus on map
+                    </Text>
+                    <Text className="text-xs text-gray-500 mt-1">
+                      {gym.latitude.toFixed(5)}, {gym.longitude.toFixed(5)}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    className={`mt-2 rounded-lg py-2 items-center justify-center ${isSaving ? "bg-gray-300" : "bg-gray-800"}`}
+                    disabled={isSaving}
+                    onPress={() => handleRemoveGym(gym)}
+                  >
+                    <Text className="text-white font-semibold text-xs">
+                      Remove
+                    </Text>
+                  </Pressable>
+                </View>
+              ))
+            )}
+          </View>
+
           {nearbyGyms.length > 0 ? (
             <View className="mb-4">
               <Text className="text-sm font-semibold text-gray-900 mb-2">
                 Nearby gyms
               </Text>
               {nearbyGyms.slice(0, 14).map((gym) => {
-                const isSelected = selectedGymId === gym.id;
+                const isSavedGym = gym.source === "saved";
 
                 return (
-                  <Pressable
+                  <View
                     key={gym.id}
-                    className={`rounded-xl border px-4 py-3 mb-2 ${isSelected ? "border-primary bg-indigo-50" : "border-gray-200 bg-white"}`}
-                    onPress={() => setSelectedGymId(gym.id)}
+                    className="rounded-xl border border-gray-200 bg-white px-4 py-3 mb-2"
                   >
-                    <Text
-                      className={`font-semibold ${isSelected ? "text-primary" : "text-gray-900"}`}
+                    <Pressable
+                      onPress={() =>
+                        focusMapOnGym({
+                          id: gym.id,
+                          name: gym.name,
+                          latitude: gym.latitude,
+                          longitude: gym.longitude,
+                        })
+                      }
                     >
-                      {gym.name}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      {gym.address ?? "Address unavailable"}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      Source:{" "}
-                      {gym.source === "community"
-                        ? "Community"
-                        : "OpenStreetMap"}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-1">
-                      {gym.distanceMeters} m away
-                    </Text>
-                  </Pressable>
+                      <Text className="font-semibold text-gray-900">
+                        {gym.name}
+                      </Text>
+                      <Text className="text-xs text-primary mt-1">
+                        Tap to focus on map
+                      </Text>
+                      <Text className="text-xs text-gray-500 mt-1">
+                        {gym.address ?? "Address unavailable"}
+                      </Text>
+                      <Text className="text-xs text-gray-500 mt-1">
+                        {isSavedGym ? "In your gyms list" : "Discovered nearby"}
+                      </Text>
+                      <Text className="text-xs text-gray-500 mt-1 mb-2">
+                        {gym.distanceMeters} m away
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      className={`rounded-lg py-2 items-center justify-center ${isSavedGym || isSaving ? "bg-gray-300" : "bg-primary"}`}
+                      disabled={isSavedGym || isSaving}
+                      onPress={() => {
+                        void handleAddGymToList(gym);
+                      }}
+                    >
+                      <Text className="text-white font-semibold text-xs">
+                        {isSavedGym ? "Saved" : "Add to My Gyms"}
+                      </Text>
+                    </Pressable>
+                  </View>
                 );
               })}
             </View>
-          ) : null}
-
-          <Pressable
-            className={`rounded-xl py-3 items-center justify-center mb-4 ${isSaving || !selectedGym ? "bg-indigo-300" : "bg-primary"}`}
-            disabled={isSaving || !selectedGym}
-            onPress={handleSaveSelectedGym}
-          >
-            <Text className="text-white font-semibold">
-              {isSaving ? "Saving..." : "Save Selected Gym"}
-            </Text>
-          </Pressable>
+          ) : (
+            <View className="mb-4 rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <Text className="text-sm text-gray-600">
+                No gyms found nearby yet. Try refresh or save your current
+                location as a gym.
+              </Text>
+            </View>
+          )}
 
           <View className="bg-white rounded-2xl border border-gray-100 p-4">
             <Text className="text-sm font-semibold text-gray-900 mb-2">
-              Can&apos;t find your gym?
+              Add current location as gym
             </Text>
             <TextInput
               className="border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 mb-3"
@@ -456,7 +572,7 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
               disabled={isSaving}
             >
               <Text className="text-white font-semibold">
-                {isSaving ? "Saving..." : "Use Current Location and Save Gym"}
+                {isSaving ? "Saving..." : "Save Current Location Gym"}
               </Text>
             </Pressable>
           </View>

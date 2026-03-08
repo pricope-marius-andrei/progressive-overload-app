@@ -22,6 +22,7 @@ export type DeviceLocation = {
 export type AppProgressState = {
   dailyStreak: number;
   experienceScore: number;
+  currentGymName: string | null;
 };
 
 export type GymLocationSettings = {
@@ -39,7 +40,14 @@ export type KnownGymPlace = {
   latitude: number;
   longitude: number;
   distanceMeters: number;
-  source: "community";
+  source: "saved";
+};
+
+export type SavedGymPlace = {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
 };
 
 type AppStateRecord = {
@@ -364,7 +372,7 @@ export async function fetchNearbyKnownGyms(input: {
   radiusMeters?: number;
 }): Promise<KnownGymPlace[]> {
   const normalizedRadius = Math.max(
-    300,
+    MIN_GYM_RADIUS_METERS,
     Math.min(8000, Math.round(input.radiusMeters ?? 3000)),
   );
   const latitudeDelta = getLatitudeDeltaForRadius(normalizedRadius);
@@ -404,7 +412,7 @@ export async function fetchNearbyKnownGyms(input: {
           longitude: row.longitude,
         }),
       ),
-      source: "community" as const,
+      source: "saved" as const,
     }))
     .filter((gym) => gym.distanceMeters <= normalizedRadius)
     .sort((left, right) => left.distanceMeters - right.distanceMeters)
@@ -461,8 +469,52 @@ export async function saveKnownGymPlace(input: {
     latitude: data.latitude,
     longitude: data.longitude,
     distanceMeters: 0,
-    source: "community",
+    source: "saved",
   };
+}
+
+export async function fetchMyGyms(): Promise<SavedGymPlace[]> {
+  const { data, error } = await supabase
+    .from("gym_place")
+    .select("id,name,latitude,longitude")
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: normalizeGymName(row.name) ?? "Unnamed gym",
+    latitude: row.latitude,
+    longitude: row.longitude,
+  }));
+}
+
+export async function deleteKnownGymPlace(gymId: number): Promise<void> {
+  const { error } = await supabase.from("gym_place").delete().eq("id", gymId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function detectCurrentGymName(
+  deviceLocation: DeviceLocation | null,
+): Promise<string | null> {
+  if (!deviceLocation) {
+    return null;
+  }
+
+  const gymSettings = await fetchGymLocationSettings();
+  const nearbyKnownGyms = await fetchNearbyKnownGyms({
+    latitude: deviceLocation.latitude,
+    longitude: deviceLocation.longitude,
+    radiusMeters: gymSettings.radiusMeters,
+  });
+
+  return nearbyKnownGyms[0]?.name ?? null;
 }
 
 export async function fetchWorkouts(): Promise<Workout[]> {
@@ -534,6 +586,7 @@ export async function fetchAndUpdateAppProgress(
   const todayDateKey = getTodayDateKey();
   const currentMonthPeriodKey = getMonthPeriodKey();
   const nowIso = new Date().toISOString();
+  const currentGymName = await detectCurrentGymName(deviceLocation);
 
   const appState = await fetchAppState();
 
@@ -549,13 +602,14 @@ export async function fetchAndUpdateAppProgress(
     return {
       dailyStreak: created.daily_streak,
       experienceScore: created.experience_score,
+      currentGymName,
     };
   }
 
   let nextStreak = appState.daily_streak;
   let nextLastGymCheckinDate = appState.last_gym_checkin_date;
 
-  if (hasGymLocationConfigured(appState) && appState.last_gym_checkin_date) {
+  if (appState.last_gym_checkin_date) {
     const inactivityDays = getDayDiff(
       appState.last_gym_checkin_date,
       todayDateKey,
@@ -566,11 +620,8 @@ export async function fetchAndUpdateAppProgress(
     }
   }
 
-  const isGymCheckinValidForToday = isInsideGymRadius(appState, deviceLocation);
-  if (
-    isGymCheckinValidForToday &&
-    appState.last_gym_checkin_date !== todayDateKey
-  ) {
+  const isAtTrackedGymToday = Boolean(currentGymName);
+  if (isAtTrackedGymToday && appState.last_gym_checkin_date !== todayDateKey) {
     nextStreak = getNextGymStreak(
       appState.daily_streak,
       appState.last_gym_checkin_date,
@@ -589,6 +640,7 @@ export async function fetchAndUpdateAppProgress(
         .update({
           daily_streak: nextStreak,
           last_gym_checkin_date: nextLastGymCheckinDate,
+          gym_name: currentGymName,
           updated_at: nowIso,
         })
         .eq("id", appState.id)
@@ -602,12 +654,14 @@ export async function fetchAndUpdateAppProgress(
       return {
         dailyStreak: syncedAppState.daily_streak,
         experienceScore: syncedAppState.experience_score,
+        currentGymName,
       };
     }
 
     return {
       dailyStreak: appState.daily_streak,
       experienceScore: appState.experience_score,
+      currentGymName,
     };
   }
 
@@ -631,6 +685,7 @@ export async function fetchAndUpdateAppProgress(
     .update({
       daily_streak: nextStreak,
       last_gym_checkin_date: nextLastGymCheckinDate,
+      gym_name: currentGymName,
       experience_score: nextExperienceScore,
       last_open_date: todayDateKey,
       last_monthly_bonus_period:
@@ -650,6 +705,7 @@ export async function fetchAndUpdateAppProgress(
   return {
     dailyStreak: updatedAppState.daily_streak,
     experienceScore: updatedAppState.experience_score,
+    currentGymName,
   };
 }
 
