@@ -15,6 +15,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { Alert } from "react-native";
@@ -22,6 +23,7 @@ import {
   createWorkout,
   deleteWorkout,
   fetchAndUpdateAppProgress,
+  fetchMyGyms,
   fetchTrainingDateKeys,
   fetchWorkouts,
 } from "./home/home.repository";
@@ -45,6 +47,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
 
   const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
   const [trainingDateKeys, setTrainingDateKeys] = useState<string[]>([]);
+  const hasShownMissingGymListWarningRef = useRef(false);
 
   const loadWorkouts = useCallback(async () => {
     try {
@@ -65,9 +68,11 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       console.error("Error loading device location:", error);
     }
 
-    const [progressResult, trainingDatesResult] = await Promise.allSettled([
+    const [progressResult, trainingDatesResult, myGymsResult] =
+      await Promise.allSettled([
       fetchAndUpdateAppProgress(deviceLocation),
       fetchTrainingDateKeys(),
+      fetchMyGyms(),
     ]);
 
     if (progressResult.status === "fulfilled") {
@@ -92,6 +97,26 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error loading training dates:", message);
       setTrainingDateKeys([]);
+    }
+
+    if (myGymsResult.status === "fulfilled") {
+      const hasAnySavedGyms = myGymsResult.value.length > 0;
+
+      if (!hasAnySavedGyms && !hasShownMissingGymListWarningRef.current) {
+        hasShownMissingGymListWarningRef.current = true;
+        Alert.alert(
+          "Gym List Required",
+          "The app will not work correctly if your My Gyms list is empty. Tap the map icon and add at least one gym.",
+        );
+      }
+
+      if (hasAnySavedGyms) {
+        hasShownMissingGymListWarningRef.current = false;
+      }
+    } else {
+      const error = myGymsResult.reason;
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error loading saved gyms:", message);
     }
 
     await loadWorkouts();
