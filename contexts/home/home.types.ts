@@ -2,6 +2,7 @@ import { Workout } from "@/types/mappers/workout.mapper";
 
 export interface User {
   username: string;
+  gymName: string | null;
   dailyStreak: number;
   experienceScore: number;
 }

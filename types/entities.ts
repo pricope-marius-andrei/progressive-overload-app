@@ -9,6 +9,7 @@ export type ExerciseDailySnapshotRow =
   Database["public"]["Tables"]["exercise_daily_snapshot"]["Row"];
 export type ExercisePerformanceIndexRow =
   Database["public"]["Tables"]["exercise_performance_index"]["Row"];
+export type GymPlaceRow = Database["public"]["Tables"]["gym_place"]["Row"];
 
 export type AppStateInsert =
   Database["public"]["Tables"]["app_state"]["Insert"];
@@ -20,6 +21,8 @@ export type ExerciseDailySnapshotInsert =
   Database["public"]["Tables"]["exercise_daily_snapshot"]["Insert"];
 export type ExercisePerformanceIndexInsert =
   Database["public"]["Tables"]["exercise_performance_index"]["Insert"];
+export type GymPlaceInsert =
+  Database["public"]["Tables"]["gym_place"]["Insert"];
 
 export type AppStateUpdate =
   Database["public"]["Tables"]["app_state"]["Update"];
@@ -31,3 +34,5 @@ export type ExerciseDailySnapshotUpdate =
   Database["public"]["Tables"]["exercise_daily_snapshot"]["Update"];
 export type ExercisePerformanceIndexUpdate =
   Database["public"]["Tables"]["exercise_performance_index"]["Update"];
+export type GymPlaceUpdate =
+  Database["public"]["Tables"]["gym_place"]["Update"];

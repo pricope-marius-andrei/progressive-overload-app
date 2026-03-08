@@ -1,4 +1,8 @@
-import { AppStateInsert, WorkoutInsert } from "@/types/entities";
+import {
+  AppStateInsert,
+  GymPlaceInsert,
+  WorkoutInsert,
+} from "@/types/entities";
 import { Workout, toWorkout } from "@/types/mappers/workout.mapper";
 import { supabase } from "@/utils/supabase";
 
@@ -6,13 +10,59 @@ const APP_STATE_SINGLETON_ID = 1;
 const DAILY_LOGIN_XP = 100;
 const XP_PER_NEW_PR = 5;
 const MONTHLY_BONUS_XP = 200;
+const DEFAULT_GYM_RADIUS_METERS = 120;
+const MIN_GYM_RADIUS_METERS = 20;
+const MAX_GYM_RADIUS_METERS = 1000;
+const CONSECUTIVE_CHECKIN_GAP_DAYS = 1;
+
+export type DeviceLocation = {
+  latitude: number;
+  longitude: number;
+};
 
 export type AppProgressState = {
   dailyStreak: number;
   experienceScore: number;
 };
 
-const TRAINING_INACTIVITY_RESET_DAYS = 7;
+export type GymLocationSettings = {
+  gymName: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  radiusMeters: number;
+  hasGymLocation: boolean;
+  lastGymCheckinDate: string | null;
+};
+
+export type KnownGymPlace = {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  distanceMeters: number;
+  source: "community";
+};
+
+type AppStateRecord = {
+  id: number;
+  daily_streak: number;
+  experience_score: number;
+  last_open_date: string | null;
+  last_monthly_bonus_period: string | null;
+  gym_latitude: number | null;
+  gym_longitude: number | null;
+  gym_name: string | null;
+  gym_radius_m: number;
+  last_gym_checkin_date: string | null;
+};
+
+type AppStateMutation = Partial<AppStateInsert> & {
+  gym_latitude?: number | null;
+  gym_longitude?: number | null;
+  gym_name?: string | null;
+  gym_radius_m?: number;
+  last_gym_checkin_date?: string | null;
+};
 
 const getTodayDateKey = (date: Date = new Date()): string => {
   const year = date.getFullYear();
@@ -70,54 +120,134 @@ const sortDateKeysDescending = (left: string, right: string): number => {
   return left < right ? 1 : -1;
 };
 
-function computeTrainingStreak(
-  trainingDateKeys: string[],
-  todayDateKey: string,
-): number {
-  if (trainingDateKeys.length === 0) {
-    return 0;
+const normalizeGymName = (
+  gymName: string | null | undefined,
+): string | null => {
+  if (typeof gymName !== "string") {
+    return null;
   }
 
-  const normalizedDateKeys = [...new Set(trainingDateKeys)].sort(
-    sortDateKeysDescending,
+  const normalizedGymName = gymName.trim();
+  return normalizedGymName.length > 0 ? normalizedGymName : null;
+};
+
+const toRadians = (value: number): number => (value * Math.PI) / 180;
+
+const normalizeGymRadiusMeters = (radiusMeters?: number | null): number => {
+  if (!Number.isFinite(radiusMeters)) {
+    return DEFAULT_GYM_RADIUS_METERS;
+  }
+
+  const rounded = Math.round(Number(radiusMeters));
+  return Math.min(
+    MAX_GYM_RADIUS_METERS,
+    Math.max(MIN_GYM_RADIUS_METERS, rounded),
   );
-  const latestTrainingDateKey = normalizedDateKeys[0];
+};
 
-  if (
-    getDayDiff(latestTrainingDateKey, todayDateKey) >
-    TRAINING_INACTIVITY_RESET_DAYS
-  ) {
-    return 0;
+const hasGymLocationConfigured = (appState: {
+  gym_latitude: number | null;
+  gym_longitude: number | null;
+}): boolean =>
+  Number.isFinite(appState.gym_latitude) &&
+  Number.isFinite(appState.gym_longitude);
+
+const calculateDistanceMeters = (
+  from: DeviceLocation,
+  to: DeviceLocation,
+): number => {
+  const EARTH_RADIUS_METERS = 6371000;
+  const deltaLatitude = toRadians(to.latitude - from.latitude);
+  const deltaLongitude = toRadians(to.longitude - from.longitude);
+  const fromLatitudeRad = toRadians(from.latitude);
+  const toLatitudeRad = toRadians(to.latitude);
+
+  const a =
+    Math.sin(deltaLatitude / 2) * Math.sin(deltaLatitude / 2) +
+    Math.cos(fromLatitudeRad) *
+      Math.cos(toLatitudeRad) *
+      Math.sin(deltaLongitude / 2) *
+      Math.sin(deltaLongitude / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return EARTH_RADIUS_METERS * c;
+};
+
+const isInsideGymRadius = (
+  appState: {
+    gym_latitude: number | null;
+    gym_longitude: number | null;
+    gym_radius_m: number;
+  },
+  deviceLocation: DeviceLocation | null,
+): boolean => {
+  if (!deviceLocation || !hasGymLocationConfigured(appState)) {
+    return false;
   }
 
-  let streak = 1;
-  let anchorDateKey = latestTrainingDateKey;
+  const gymLocation: DeviceLocation = {
+    latitude: appState.gym_latitude as number,
+    longitude: appState.gym_longitude as number,
+  };
+  const distanceMeters = calculateDistanceMeters(deviceLocation, gymLocation);
+  return distanceMeters <= normalizeGymRadiusMeters(appState.gym_radius_m);
+};
 
-  for (let i = 1; i < normalizedDateKeys.length; i += 1) {
-    const previousDateKey = normalizedDateKeys[i];
-    const dayGap = getDayDiff(previousDateKey, anchorDateKey);
-
-    if (dayGap === 0) {
-      continue;
-    }
-
-    if (dayGap > TRAINING_INACTIVITY_RESET_DAYS) {
-      break;
-    }
-
-    streak += 1;
-    anchorDateKey = previousDateKey;
+const getNextGymStreak = (
+  currentStreak: number,
+  lastGymCheckinDate: string | null,
+  todayDateKey: string,
+): number => {
+  if (!lastGymCheckinDate) {
+    return 1;
   }
 
-  return streak;
-}
+  const dayGap = getDayDiff(lastGymCheckinDate, todayDateKey);
+  if (dayGap <= 0) {
+    return currentStreak;
+  }
+
+  if (dayGap === CONSECUTIVE_CHECKIN_GAP_DAYS) {
+    return currentStreak + 1;
+  }
+
+  return 1;
+};
+
+const toGymLocationSettings = (
+  appState: {
+    gym_latitude: number | null;
+    gym_longitude: number | null;
+    gym_name: string | null;
+    gym_radius_m: number;
+    last_gym_checkin_date: string | null;
+  } | null,
+): GymLocationSettings => {
+  if (!appState) {
+    return {
+      gymName: null,
+      latitude: null,
+      longitude: null,
+      radiusMeters: DEFAULT_GYM_RADIUS_METERS,
+      hasGymLocation: false,
+      lastGymCheckinDate: null,
+    };
+  }
+
+  return {
+    gymName: normalizeGymName(appState.gym_name),
+    latitude: appState.gym_latitude,
+    longitude: appState.gym_longitude,
+    radiusMeters: normalizeGymRadiusMeters(appState.gym_radius_m),
+    hasGymLocation: hasGymLocationConfigured(appState),
+    lastGymCheckinDate: appState.last_gym_checkin_date,
+  };
+};
 
 async function fetchAppState() {
   const { data, error } = await supabase
     .from("app_state")
-    .select(
-      "id, daily_streak, experience_score, last_open_date, last_monthly_bonus_period",
-    )
+    .select("*")
     .eq("id", APP_STATE_SINGLETON_ID)
     .maybeSingle();
 
@@ -125,32 +255,217 @@ async function fetchAppState() {
     throw new Error(error.message);
   }
 
-  return data;
+  return (data as AppStateRecord | null) ?? null;
 }
 
 async function ensureAppState(
-  overrides: Partial<AppStateInsert> = {},
-): Promise<{ daily_streak: number; experience_score: number }> {
-  const payload: AppStateInsert = {
+  overrides: Partial<AppStateMutation> = {},
+): Promise<AppStateRecord> {
+  const payload: AppStateMutation = {
     id: APP_STATE_SINGLETON_ID,
     daily_streak: 0,
     experience_score: 0,
     last_open_date: null,
     last_monthly_bonus_period: getMonthPeriodKey(),
+    gym_latitude: null,
+    gym_longitude: null,
+    gym_name: null,
+    gym_radius_m: DEFAULT_GYM_RADIUS_METERS,
+    last_gym_checkin_date: null,
     ...overrides,
   };
 
   const { data, error } = await supabase
     .from("app_state")
-    .insert(payload)
-    .select("daily_streak, experience_score")
+    .insert(payload as AppStateInsert)
+    .select("*")
     .single();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return data as AppStateRecord;
+}
+
+export async function fetchGymLocationSettings(): Promise<GymLocationSettings> {
+  const appState = await fetchAppState();
+  return toGymLocationSettings(appState);
+}
+
+export async function saveGymLocationSettings(input: {
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  gymName?: string | null;
+}): Promise<GymLocationSettings> {
+  const normalizedRadius = normalizeGymRadiusMeters(input.radiusMeters);
+  const normalizedGymName = normalizeGymName(input.gymName);
+  const nowIso = new Date().toISOString();
+  const appState = await fetchAppState();
+  const gymNamePatch: AppStateMutation =
+    input.gymName === undefined
+      ? {}
+      : {
+          gym_name: normalizedGymName,
+        };
+
+  if (!appState) {
+    const createPayload: AppStateMutation = {
+      gym_latitude: input.latitude,
+      gym_longitude: input.longitude,
+      ...gymNamePatch,
+      gym_radius_m: normalizedRadius,
+      updated_at: nowIso,
+    };
+
+    const created = await ensureAppState({
+      ...createPayload,
+    });
+
+    return toGymLocationSettings(created);
+  }
+
+  const updatePayload: AppStateMutation = {
+    gym_latitude: input.latitude,
+    gym_longitude: input.longitude,
+    ...gymNamePatch,
+    gym_radius_m: normalizedRadius,
+    updated_at: nowIso,
+  };
+
+  const { data, error } = await supabase
+    .from("app_state")
+    .update(updatePayload as AppStateInsert)
+    .eq("id", APP_STATE_SINGLETON_ID)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return toGymLocationSettings(data as AppStateRecord);
+}
+
+const getLatitudeDeltaForRadius = (radiusMeters: number): number =>
+  radiusMeters / 111_320;
+
+const getLongitudeDeltaForRadius = (
+  radiusMeters: number,
+  latitude: number,
+): number => {
+  const cosLatitude = Math.cos(toRadians(latitude));
+  const metersPerLongitudeDegree =
+    111_320 * Math.max(0.1, Math.abs(cosLatitude));
+  return radiusMeters / metersPerLongitudeDegree;
+};
+
+export async function fetchNearbyKnownGyms(input: {
+  latitude: number;
+  longitude: number;
+  radiusMeters?: number;
+}): Promise<KnownGymPlace[]> {
+  const normalizedRadius = Math.max(
+    300,
+    Math.min(8000, Math.round(input.radiusMeters ?? 3000)),
+  );
+  const latitudeDelta = getLatitudeDeltaForRadius(normalizedRadius);
+  const longitudeDelta = getLongitudeDeltaForRadius(
+    normalizedRadius,
+    input.latitude,
+  );
+
+  const minLatitude = input.latitude - latitudeDelta;
+  const maxLatitude = input.latitude + latitudeDelta;
+  const minLongitude = input.longitude - longitudeDelta;
+  const maxLongitude = input.longitude + longitudeDelta;
+
+  const { data, error } = await supabase
+    .from("gym_place")
+    .select("id, name, latitude, longitude")
+    .gte("latitude", minLatitude)
+    .lte("latitude", maxLatitude)
+    .gte("longitude", minLongitude)
+    .lte("longitude", maxLongitude)
+    .limit(200);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = data ?? [];
+  const gyms = rows
+    .map((row) => ({
+      id: row.id,
+      name: normalizeGymName(row.name) ?? "Unnamed gym",
+      latitude: row.latitude,
+      longitude: row.longitude,
+      distanceMeters: Math.round(
+        calculateDistanceMeters(input, {
+          latitude: row.latitude,
+          longitude: row.longitude,
+        }),
+      ),
+      source: "community" as const,
+    }))
+    .filter((gym) => gym.distanceMeters <= normalizedRadius)
+    .sort((left, right) => left.distanceMeters - right.distanceMeters)
+    .slice(0, 50);
+
+  return gyms;
+}
+
+export async function saveKnownGymPlace(input: {
+  name: string;
+  latitude: number;
+  longitude: number;
+}): Promise<KnownGymPlace> {
+  const normalizedName = normalizeGymName(input.name);
+  if (!normalizedName) {
+    throw new Error("Gym name is required.");
+  }
+
+  const existingNearbyGyms = await fetchNearbyKnownGyms({
+    latitude: input.latitude,
+    longitude: input.longitude,
+    radiusMeters: 100,
+  });
+  const matchingGym = existingNearbyGyms.find(
+    (gym) =>
+      gym.name.toLowerCase() === normalizedName.toLowerCase() &&
+      gym.distanceMeters <= 80,
+  );
+
+  if (matchingGym) {
+    return matchingGym;
+  }
+
+  const payload: GymPlaceInsert = {
+    name: normalizedName,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("gym_place")
+    .insert(payload)
+    .select("id, name, latitude, longitude")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return {
+    id: data.id,
+    name: normalizeGymName(data.name) ?? normalizedName,
+    latitude: data.latitude,
+    longitude: data.longitude,
+    distanceMeters: 0,
+    source: "community",
+  };
 }
 
 export async function fetchWorkouts(): Promise<Workout[]> {
@@ -216,22 +531,22 @@ export async function deleteWorkout(workoutId: number): Promise<void> {
   }
 }
 
-export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
+export async function fetchAndUpdateAppProgress(
+  deviceLocation: DeviceLocation | null,
+): Promise<AppProgressState> {
   const todayDateKey = getTodayDateKey();
   const currentMonthPeriodKey = getMonthPeriodKey();
+  const nowIso = new Date().toISOString();
 
-  const [appState, trainingDateKeys] = await Promise.all([
-    fetchAppState(),
-    fetchTrainingDateKeys(),
-  ]);
-  const trainingStreak = computeTrainingStreak(trainingDateKeys, todayDateKey);
+  const appState = await fetchAppState();
 
   if (!appState) {
     const created = await ensureAppState({
-      daily_streak: trainingStreak,
+      daily_streak: 0,
       experience_score: DAILY_LOGIN_XP,
       last_open_date: todayDateKey,
       last_monthly_bonus_period: currentMonthPeriodKey,
+      updated_at: nowIso,
     });
 
     return {
@@ -240,13 +555,44 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
     };
   }
 
+  let nextStreak = appState.daily_streak;
+  let nextLastGymCheckinDate = appState.last_gym_checkin_date;
+
+  if (hasGymLocationConfigured(appState) && appState.last_gym_checkin_date) {
+    const inactivityDays = getDayDiff(
+      appState.last_gym_checkin_date,
+      todayDateKey,
+    );
+
+    if (inactivityDays > CONSECUTIVE_CHECKIN_GAP_DAYS) {
+      nextStreak = 0;
+    }
+  }
+
+  const isGymCheckinValidForToday = isInsideGymRadius(appState, deviceLocation);
+  if (
+    isGymCheckinValidForToday &&
+    appState.last_gym_checkin_date !== todayDateKey
+  ) {
+    nextStreak = getNextGymStreak(
+      appState.daily_streak,
+      appState.last_gym_checkin_date,
+      todayDateKey,
+    );
+    nextLastGymCheckinDate = todayDateKey;
+  }
+
   if (appState.last_open_date === todayDateKey) {
-    if (appState.daily_streak !== trainingStreak) {
+    if (
+      appState.daily_streak !== nextStreak ||
+      appState.last_gym_checkin_date !== nextLastGymCheckinDate
+    ) {
       const { data: syncedAppState, error: syncError } = await supabase
         .from("app_state")
         .update({
-          daily_streak: trainingStreak,
-          updated_at: new Date().toISOString(),
+          daily_streak: nextStreak,
+          last_gym_checkin_date: nextLastGymCheckinDate,
+          updated_at: nowIso,
         })
         .eq("id", APP_STATE_SINGLETON_ID)
         .select("daily_streak, experience_score")
@@ -281,20 +627,20 @@ export async function fetchAndUpdateAppProgress(): Promise<AppProgressState> {
   );
   const monthlyBonusXp = completedMonths * MONTHLY_BONUS_XP;
 
-  const nextStreak = trainingStreak;
   const nextExperienceScore =
     (appState.experience_score ?? 0) + DAILY_LOGIN_XP + monthlyBonusXp;
   const { data: updatedAppState, error: updateError } = await supabase
     .from("app_state")
     .update({
       daily_streak: nextStreak,
+      last_gym_checkin_date: nextLastGymCheckinDate,
       experience_score: nextExperienceScore,
       last_open_date: todayDateKey,
       last_monthly_bonus_period:
         completedMonths > 0
           ? currentMonthPeriodKey
           : appState.last_monthly_bonus_period,
-      updated_at: new Date().toISOString(),
+      updated_at: nowIso,
     })
     .eq("id", APP_STATE_SINGLETON_ID)
     .select("daily_streak, experience_score")

@@ -6,23 +6,25 @@
  */
 
 import { Workout } from "@/types/mappers/workout.mapper";
+import { getCurrentDeviceCoordinates } from "@/utils/location";
 import { Href, useRouter } from "expo-router";
 import React, {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import { Alert } from "react-native";
 import {
-    createWorkout,
-    deleteWorkout,
-    fetchAndUpdateAppProgress,
-    fetchTrainingDateKeys,
-    fetchWorkouts,
+  createWorkout,
+  deleteWorkout,
+  fetchAndUpdateAppProgress,
+  fetchGymLocationSettings,
+  fetchTrainingDateKeys,
+  fetchWorkouts,
 } from "./home/home.repository";
 import { HomeContextType, User } from "./home/home.types";
 
@@ -37,6 +39,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
 
   const [user, setUser] = useState<User>({
     username: "Athlete",
+    gymName: null,
     dailyStreak: 0,
     experienceScore: 0,
   });
@@ -55,8 +58,22 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
   }, []);
 
   const refreshHomeState = useCallback(async () => {
+    let deviceLocation: { latitude: number; longitude: number } | null = null;
+    let gymName: string | null = null;
+
+    try {
+      const gymSettings = await fetchGymLocationSettings();
+      gymName = gymSettings.gymName;
+      if (gymSettings.hasGymLocation) {
+        deviceLocation = await getCurrentDeviceCoordinates();
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Error loading gym settings:", message);
+    }
+
     const [progressResult, trainingDatesResult] = await Promise.allSettled([
-      fetchAndUpdateAppProgress(),
+      fetchAndUpdateAppProgress(deviceLocation),
       fetchTrainingDateKeys(),
     ]);
 
@@ -64,6 +81,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       const progress = progressResult.value;
       setUser((prev) => ({
         ...prev,
+        gymName,
         dailyStreak: progress.dailyStreak,
         experienceScore: progress.experienceScore,
       }));
@@ -71,6 +89,7 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
       const error = progressResult.reason;
       const message = error instanceof Error ? error.message : String(error);
       console.error("Error refreshing app progress:", message);
+      setUser((prev) => ({ ...prev, gymName }));
     }
 
     if (trainingDatesResult.status === "fulfilled") {

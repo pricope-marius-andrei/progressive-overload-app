@@ -7,6 +7,7 @@
 
 import {
     AddWorkoutForm,
+    GymPickerModal,
     TrainingCalendar,
     WelcomeHeader,
     WorkoutsList,
@@ -15,9 +16,13 @@ import { HomeProvider, useHome } from "@/contexts";
 import React, { useCallback, useState } from "react";
 import { RefreshControl, View } from "react-native";
 
-const HomeHeader: React.FC = () => (
+type HomeHeaderProps = {
+  onOpenGymPicker: () => void;
+};
+
+const HomeHeader: React.FC<HomeHeaderProps> = ({ onOpenGymPicker }) => (
   <View className="mb-5">
-    <WelcomeHeader />
+    <WelcomeHeader onOpenGymPicker={onOpenGymPicker} />
     <TrainingCalendar />
     <AddWorkoutForm />
   </View>
@@ -26,6 +31,7 @@ const HomeHeader: React.FC = () => (
 const HomeContent: React.FC = () => {
   const { refreshHomeState } = useHome();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGymPickerVisible, setIsGymPickerVisible] = useState(false);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -38,8 +44,16 @@ const HomeContent: React.FC = () => {
 
   return (
     <View className="flex-1 bg-gray-50">
+      <GymPickerModal
+        visible={isGymPickerVisible}
+        onClose={() => setIsGymPickerVisible(false)}
+        onSaved={refreshHomeState}
+      />
+
       <WorkoutsList
-        ListHeaderComponent={HomeHeader}
+        ListHeaderComponent={() => (
+          <HomeHeader onOpenGymPicker={() => setIsGymPickerVisible(true)} />
+        )}
         refreshControl={
           <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
         }

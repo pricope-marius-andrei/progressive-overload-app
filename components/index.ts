@@ -7,6 +7,7 @@
 // Home screen components
 export {
     AddWorkoutForm,
+    GymPickerModal,
     TrainingCalendar,
     WelcomeHeader,
     WorkoutItem,
