@@ -35,13 +35,13 @@ const MapSection: React.FC<MapSectionProps> = ({
   if (Platform.OS === "web") {
     return (
       <View
-        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+        className="rounded-2xl border border-white/70 bg-white/65 px-4 py-4"
         onLayout={onMapSectionLayout}
       >
-        <Text className="text-sm font-semibold text-slate-900">
+        <Text className="text-sm font-semibold text-indigo-900">
           Map preview unavailable on web
         </Text>
-        <Text className="text-xs text-slate-600 mt-1 leading-5">
+        <Text className="mt-1 text-xs leading-5 text-indigo-700">
           Map preview is available on iOS/Android. You can still browse nearby
           gyms below or save your current location as a custom gym.
         </Text>
@@ -52,24 +52,22 @@ const MapSection: React.FC<MapSectionProps> = ({
   return (
     <View onLayout={onMapSectionLayout}>
       <View className="mb-3 flex-row flex-wrap gap-2">
-        <View className="rounded-full bg-blue-100 px-3 py-1">
-          <Text className="text-[11px] font-semibold text-blue-800">
-            Blue: Your location
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1">
+          <Text className="text-[11px] font-semibold text-indigo-600">You</Text>
+        </View>
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1">
+          <Text className="text-[11px] font-semibold text-indigo-600">
+            Saved
           </Text>
         </View>
-        <View className="rounded-full bg-emerald-100 px-3 py-1">
-          <Text className="text-[11px] font-semibold text-emerald-800">
-            Green: Saved gyms
-          </Text>
-        </View>
-        <View className="rounded-full bg-orange-100 px-3 py-1">
-          <Text className="text-[11px] font-semibold text-orange-800">
-            Orange: Custom pin
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1">
+          <Text className="text-[11px] font-semibold text-indigo-600">
+            Custom pin
           </Text>
         </View>
       </View>
 
-      <View className="rounded-2xl overflow-hidden border border-slate-200 bg-white">
+      <View className="overflow-hidden rounded-2xl border border-white/70 bg-white/70">
         {mapCenter ? (
           <MapView
             ref={mapRef}
@@ -86,7 +84,7 @@ const MapSection: React.FC<MapSectionProps> = ({
               <Marker
                 coordinate={deviceCoordinates}
                 title="Your Location"
-                pinColor="#2563eb"
+                pinColor="#4F46E5"
               />
             ) : null}
 
@@ -103,8 +101,8 @@ const MapSection: React.FC<MapSectionProps> = ({
                   focusedGym?.id === gym.id
                     ? FOCUSED_PIN_COLOR
                     : gym.source === "saved"
-                      ? "#16a34a"
-                      : "#6366f1"
+                      ? "#3730A3"
+                      : "#6366F1"
                 }
               />
             ))}
@@ -127,16 +125,16 @@ const MapSection: React.FC<MapSectionProps> = ({
                 coordinate={selectedMapCoordinates}
                 title={customGymName.trim() || "Selected custom location"}
                 description="Custom location picked from the map"
-                pinColor="#f97316"
+                pinColor="#818CF8"
               />
             ) : null}
           </MapView>
         ) : (
           <View
             style={{ height: 290 }}
-            className="items-center justify-center px-4 bg-slate-50"
+            className="items-center justify-center bg-white/70 px-4"
           >
-            <Text className="text-slate-500 text-center">
+            <Text className="text-center text-indigo-700">
               Loading your location and nearby gyms...
             </Text>
           </View>

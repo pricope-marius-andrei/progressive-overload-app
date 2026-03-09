@@ -19,8 +19,8 @@ const AddExerciseButton: React.FC = () => {
     <TouchableOpacity
       className={`rounded-2xl px-4 py-4 mb-4 border ${
         isHistoryMode
-          ? "bg-gray-100 border-gray-200"
-          : "bg-white border-indigo-100"
+          ? "bg-indigo-100 border-indigo-200"
+          : "bg-white/65 border-white/70"
       }`}
       onPress={startCreatingExercise}
       disabled={isHistoryMode}
@@ -35,7 +35,7 @@ const AddExerciseButton: React.FC = () => {
         <View className="flex-row items-center flex-1">
           <View
             className={`h-10 w-10 rounded-full items-center justify-center mr-3 ${
-              isHistoryMode ? "bg-gray-200" : "bg-indigo-50"
+              isHistoryMode ? "bg-indigo-200" : "bg-indigo-50/90"
             }`}
           >
             <Ionicons
@@ -48,14 +48,14 @@ const AddExerciseButton: React.FC = () => {
           <View className="flex-1">
             <Text
               className={`font-semibold text-base ${
-                isHistoryMode ? "text-gray-500" : "text-gray-900"
+                isHistoryMode ? "text-indigo-500" : "text-indigo-950"
               }`}
             >
               {isHistoryMode ? "History mode" : "Add exercise"}
             </Text>
             <Text
               className={`text-sm ${
-                isHistoryMode ? "text-gray-400" : "text-gray-500"
+                isHistoryMode ? "text-indigo-400" : "text-indigo-700"
               }`}
             >
               {isHistoryMode

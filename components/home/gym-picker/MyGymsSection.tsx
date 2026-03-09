@@ -18,19 +18,19 @@ const MyGymsSection: React.FC<MyGymsSectionProps> = ({
   onRemoveGym,
 }) => {
   return (
-    <View className="mb-4 rounded-3xl border border-slate-200 bg-white p-4">
+    <View className="mb-4 rounded-3xl border border-white/70 bg-white/65 p-4">
       <View className="flex-row items-center justify-between mb-3">
-        <Text className="text-base font-extrabold text-slate-900">My Gyms</Text>
-        <View className="rounded-full bg-slate-100 px-3 py-1">
-          <Text className="text-[11px] font-semibold text-slate-700">
+        <Text className="text-base font-semibold text-indigo-950">My Gyms</Text>
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1">
+          <Text className="text-[11px] font-semibold text-indigo-700">
             {myGyms.length} saved
           </Text>
         </View>
       </View>
 
       {myGyms.length === 0 ? (
-        <View className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4">
-          <Text className="text-sm text-slate-600">
+        <View className="rounded-2xl border border-dashed border-indigo-200 bg-white/70 px-4 py-4">
+          <Text className="text-sm text-indigo-700">
             No gyms saved yet. Add from nearby gyms or save your current
             location.
           </Text>
@@ -39,26 +39,26 @@ const MyGymsSection: React.FC<MyGymsSectionProps> = ({
         myGyms.map((gym) => (
           <View
             key={`my-gym:${gym.id}`}
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 mb-3"
+            className="mb-3 rounded-2xl border border-indigo-100 bg-white/80 px-4 py-4"
           >
             <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-slate-900 flex-1 mr-2">
+              <Text className="mr-2 flex-1 font-semibold text-indigo-950">
                 {gym.name}
               </Text>
-              <View className="rounded-full bg-emerald-100 px-2 py-1">
-                <Text className="text-[10px] font-semibold text-emerald-800">
+              <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-2 py-1">
+                <Text className="text-[10px] font-semibold text-indigo-600">
                   SAVED
                 </Text>
               </View>
             </View>
 
-            <Text className="text-xs text-slate-500 mt-2">
+            <Text className="mt-2 text-xs text-indigo-700">
               {gym.latitude.toFixed(5)}, {gym.longitude.toFixed(5)}
             </Text>
 
             <View className="flex-row gap-2 mt-3">
               <Pressable
-                className="flex-1 rounded-xl bg-slate-900 py-2.5 items-center justify-center"
+                className="flex-1 items-center justify-center rounded-xl bg-indigo-500 py-2.5"
                 onPress={() =>
                   onFocusGym({
                     id: `saved:${gym.id}`,
@@ -68,18 +68,18 @@ const MyGymsSection: React.FC<MyGymsSectionProps> = ({
                   })
                 }
               >
-                <Text className="text-white font-semibold text-xs">
+                <Text className="text-xs font-semibold text-white">
                   Focus on Map
                 </Text>
               </Pressable>
 
               <Pressable
-                className={`rounded-xl px-4 py-2.5 items-center justify-center ${isSaving ? "bg-slate-200" : "bg-rose-100"}`}
+                className={`items-center justify-center rounded-xl border border-indigo-100 px-4 py-2.5 ${isSaving ? "bg-indigo-100" : "bg-white/70"}`}
                 disabled={isSaving}
                 onPress={() => onRemoveGym(gym)}
               >
                 <Text
-                  className={`font-semibold text-xs ${isSaving ? "text-slate-400" : "text-rose-700"}`}
+                  className={`text-xs font-semibold ${isSaving ? "text-indigo-400" : "text-indigo-700"}`}
                 >
                   Remove
                 </Text>

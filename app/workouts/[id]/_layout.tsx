@@ -49,8 +49,8 @@ const WorkoutIdLayout: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
-        <ActivityIndicator size="small" color="#2563eb" />
+      <View className="flex-1 items-center justify-center bg-[#EEF2FF] px-6">
+        <ActivityIndicator size="small" color="#6366F1" />
       </View>
     );
   }
@@ -61,10 +61,10 @@ const WorkoutIdLayout: React.FC = () => {
 
   if (isValidWorkout === null) {
     return (
-      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
-        <View className="bg-white border border-gray-100 rounded-2xl p-6 items-center w-full max-w-sm">
+      <View className="flex-1 items-center justify-center bg-[#EEF2FF] px-6">
+        <View className="w-full max-w-sm items-center rounded-2xl border border-white/70 bg-white/65 p-6">
           <ActivityIndicator size="small" color="#6366f1" />
-          <Text className="mt-3 text-base text-gray-600">
+          <Text className="mt-3 text-base text-indigo-700">
             Loading workout...
           </Text>
         </View>
@@ -74,12 +74,12 @@ const WorkoutIdLayout: React.FC = () => {
 
   if (!workoutId || !isValidWorkout) {
     return (
-      <View className="flex-1 items-center justify-center px-6 bg-gray-50">
-        <View className="bg-white border border-gray-100 rounded-2xl p-6 items-center w-full max-w-sm">
-          <Text className="text-base font-semibold text-gray-800 mb-1">
+      <View className="flex-1 items-center justify-center bg-[#EEF2FF] px-6">
+        <View className="w-full max-w-sm items-center rounded-2xl border border-white/70 bg-white/65 p-6">
+          <Text className="mb-1 text-base font-semibold text-indigo-900">
             Workout not found
           </Text>
-          <Text className="text-sm text-gray-500 text-center">
+          <Text className="text-center text-sm text-indigo-700">
             Go back to Home and open an existing workout.
           </Text>
         </View>

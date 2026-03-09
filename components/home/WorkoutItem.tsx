@@ -6,7 +6,6 @@
 
 import { useHome } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
-import { COLORS } from "@/utils/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
 import { Alert, Pressable, Text, TouchableOpacity, View } from "react-native";
@@ -37,32 +36,43 @@ const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
   };
 
   return (
-    <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
-      <View className="flex-row justify-between items-center">
+    <View className="mb-3 rounded-3xl border border-white/70 bg-white/65 p-4">
+      <View className="mb-2 flex-row items-center justify-between">
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-2.5 py-1">
+          <Text className="text-[10px] font-semibold uppercase tracking-[1px] text-indigo-600">
+            Workout
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          className="ml-3 rounded-xl border border-indigo-100 bg-indigo-50/80 p-2"
+          onPress={handleConfirmDeleteWorkout}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete workout ${workout.name}`}
+        >
+          <AntDesign name="delete" size={18} color="#4F46E5" />
+        </TouchableOpacity>
+      </View>
+
+      <View className="flex-row items-center justify-between">
         <Pressable
           onPress={() => navigateToWorkout(workout)}
           className="flex-1 flex-row items-center"
           accessibilityRole="button"
           accessibilityLabel={`Open workout ${workout.name}`}
         >
-          <View className="h-9 w-9 rounded-full bg-indigo-50 items-center justify-center mr-3">
-            <AntDesign name="caret-right" size={12} color={COLORS.primary} />
+          <View className="mr-3 h-10 w-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-500">
+            <AntDesign name="caret-right" size={12} color="#FFFFFF" />
           </View>
           <View className="flex-1">
-            <Text className="text-gray-900 font-semibold text-base">
+            <Text className="text-base font-semibold text-indigo-950">
               {workout.name}
             </Text>
-            <Text className="text-gray-500 text-sm">Tap to open workout</Text>
+            <Text className="text-sm text-indigo-700">
+              Tap to open and log sets
+            </Text>
           </View>
         </Pressable>
-        <TouchableOpacity
-          className="bg-red-50 rounded-xl p-2 ml-3"
-          onPress={handleConfirmDeleteWorkout}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete workout ${workout.name}`}
-        >
-          <AntDesign name="delete" size={18} color={COLORS.danger} />
-        </TouchableOpacity>
       </View>
     </View>
   );

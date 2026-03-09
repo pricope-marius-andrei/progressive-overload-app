@@ -25,15 +25,19 @@ const AddWorkoutForm: React.FC = () => {
   }, [newWorkoutName, handleSaveNewWorkout]);
 
   return (
-    <View className="bg-white rounded-2xl p-4 border border-gray-100">
-      <Text className="text-base font-semibold text-gray-900 mb-3">
+    <View className="rounded-3xl border border-white/70 bg-white/65 p-4">
+      <Text className="mb-1 text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
+        New Session
+      </Text>
+      <Text className="mb-3 text-base font-semibold text-indigo-950">
         Create workout
       </Text>
 
       <View className="flex-row items-center gap-3">
         <TextInput
-          className="flex-1 border border-gray-200 bg-gray-50 rounded-xl px-4 py-3"
+          className="flex-1 rounded-xl border border-indigo-100 bg-white/80 px-4 py-3 text-indigo-950"
           placeholder="e.g. Push Day"
+          placeholderTextColor="#6366F1"
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"
@@ -41,7 +45,7 @@ const AddWorkoutForm: React.FC = () => {
         />
 
         <Pressable
-          className={`rounded-xl px-4 py-3 items-center justify-center ${isDisabled ? "bg-indigo-200" : "bg-primary"}`}
+          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-indigo-300" : "bg-indigo-500"}`}
           disabled={isDisabled}
           onPress={handleSubmit}
         >
@@ -49,7 +53,7 @@ const AddWorkoutForm: React.FC = () => {
         </Pressable>
       </View>
 
-      <Text className="text-xs text-gray-500 mt-2">
+      <Text className="mt-2 text-xs text-indigo-700">
         Add a workout, then tap it below to start logging exercises.
       </Text>
     </View>

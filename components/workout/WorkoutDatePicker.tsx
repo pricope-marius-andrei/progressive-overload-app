@@ -103,22 +103,22 @@ const WorkoutDatePicker: React.FC = () => {
               key={date}
               className={`flex items-center rounded-xl border py-2.5 mr-2 ${
                 isSelected
-                  ? "bg-primary border-primary"
-                  : "bg-gray-50 border-gray-200"
+                  ? "border-indigo-500 bg-indigo-500"
+                  : "border-indigo-100 bg-white/80"
               }`}
               style={{ width: DATE_CARD_WIDTH }}
               onPress={() => setSelectedSnapshotDate(date)}
             >
               <Text
                 className={`text-xs ${
-                  isSelected ? "text-white" : "text-gray-500"
+                  isSelected ? "text-white" : "text-indigo-500"
                 }`}
               >
                 {getDayLabel(date)}
               </Text>
               <Text
                 className={`text-sm font-semibold ${
-                  isSelected ? "text-white" : "text-gray-800"
+                  isSelected ? "text-white" : "text-indigo-900"
                 }`}
               >
                 {getMonthDayLabel(date)}

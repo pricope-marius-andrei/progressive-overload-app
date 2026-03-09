@@ -22,7 +22,7 @@ type HomeHeaderProps = {
 };
 
 const HomeHeader: React.FC<HomeHeaderProps> = ({ onOpenGymPicker }) => (
-  <View className="mb-5">
+  <View className="mb-6">
     <WelcomeHeader onOpenGymPicker={onOpenGymPicker} />
     <TrainingCalendar />
     <AddWorkoutForm />
@@ -44,21 +44,37 @@ const HomeContent: React.FC = () => {
   }, [refreshHomeState]);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <GymPickerModal
-        visible={isGymPickerVisible}
-        onClose={() => setIsGymPickerVisible(false)}
-        onSaved={refreshHomeState}
+    <View className="relative flex-1 bg-[#EEF2FF]">
+      <View
+        pointerEvents="none"
+        style={{ zIndex: 0 }}
+        className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[#6366F1]/15"
+      />
+      <View
+        pointerEvents="none"
+        style={{ zIndex: 0 }}
+        className="absolute top-32 -left-20 h-56 w-56 rounded-full bg-[#6366F1]/10"
       />
 
-      <WorkoutsList
-        ListHeaderComponent={() => (
-          <HomeHeader onOpenGymPicker={() => setIsGymPickerVisible(true)} />
-        )}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
-      />
+      <View className="flex-1" style={{ zIndex: 1 }}>
+        <GymPickerModal
+          visible={isGymPickerVisible}
+          onClose={() => setIsGymPickerVisible(false)}
+          onSaved={refreshHomeState}
+        />
+
+        <WorkoutsList
+          ListHeaderComponent={() => (
+            <HomeHeader onOpenGymPicker={() => setIsGymPickerVisible(true)} />
+          )}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+            />
+          }
+        />
+      </View>
     </View>
   );
 };
@@ -72,8 +88,8 @@ const Home: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
-        <ActivityIndicator size="small" color="#2563eb" />
+      <View className="flex-1 items-center justify-center bg-[#EEF2FF]">
+        <ActivityIndicator size="small" color="#6366F1" />
       </View>
     );
   }

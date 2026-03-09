@@ -83,7 +83,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
   };
 
   return (
-    <View className="bg-white rounded-2xl border border-gray-100 p-4 mb-3">
+    <View className="mb-3 rounded-2xl border border-white/70 bg-white/65 p-4">
       <View className="flex-row justify-between items-center mb-3">
         <TouchableOpacity
           className="flex-1 pr-2"
@@ -92,22 +92,22 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
         >
           <View className="flex-row items-center justify-between">
             <View className="pr-2 flex-1">
-              <Text className="text-lg font-semibold text-gray-900">
+              <Text className="text-lg font-semibold text-indigo-950">
                 {exercise.name}
               </Text>
-              <Text className="text-sm text-gray-500 mt-0.5">{setLabel}</Text>
+              <Text className="mt-0.5 text-sm text-indigo-700">{setLabel}</Text>
             </View>
             <Ionicons
               name={isExpanded ? "chevron-up" : "chevron-down"}
               size={18}
-              color="#6b7280"
+              color="#6366F1"
             />
           </View>
         </TouchableOpacity>
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
             className={`rounded-xl px-3 py-2 ${
-              isHistoryMode ? "bg-gray-100" : "bg-indigo-50"
+              isHistoryMode ? "bg-indigo-100" : "bg-indigo-50/90"
             }`}
             onPress={handleEditPress}
             disabled={isHistoryMode || isLoadingDetails}
@@ -121,7 +121,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
               <Text
                 className={`font-medium ml-1 ${
                   isHistoryMode || isLoadingDetails
-                    ? "text-gray-400"
+                    ? "text-indigo-300"
                     : "text-primary"
                 }`}
               >
@@ -131,14 +131,14 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           </TouchableOpacity>
           <TouchableOpacity
             className={`rounded-xl px-3 py-2 ${
-              isHistoryMode ? "bg-gray-100" : "bg-red-50"
+              isHistoryMode ? "bg-indigo-100" : "bg-indigo-50/90"
             }`}
             onPress={handleConfirmRemoveExercise}
             disabled={isHistoryMode}
           >
             <Text
               className={`font-medium ${
-                isHistoryMode ? "text-gray-400" : "text-red-600"
+                isHistoryMode ? "text-indigo-300" : "text-indigo-700"
               }`}
             >
               Remove
@@ -150,7 +150,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
       {isExpanded && (
         <>
           {isLoadingDetails && !detailedExercise && (
-            <Text className="text-gray-500 italic mb-2">
+            <Text className="mb-2 italic text-indigo-600">
               Loading details...
             </Text>
           )}
@@ -158,10 +158,10 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           {sets.map((set, index) => (
             <View
               key={set.id}
-              className="flex-row justify-between items-center py-2.5 px-2 rounded-xl bg-gray-50 mb-2"
+              className="mb-2 flex-row items-center justify-between rounded-xl bg-white/80 px-2 py-2.5"
             >
-              <Text className="text-gray-500">Set {index + 1}</Text>
-              <Text className="text-gray-800 font-medium">
+              <Text className="text-indigo-700">Set {index + 1}</Text>
+              <Text className="font-medium text-indigo-900">
                 {set.reps} reps × {set.weight} kg
               </Text>
             </View>
@@ -177,13 +177,13 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           )}
 
           {!isLoadingDetails && sets.length === 0 && (
-            <Text className="text-gray-500 italic">No sets added</Text>
+            <Text className="italic text-indigo-600">No sets added</Text>
           )}
         </>
       )}
 
       {!isExpanded && (
-        <Text className="text-gray-500 text-sm italic">
+        <Text className="text-sm italic text-indigo-600">
           Collapsed — tap the header to expand.
         </Text>
       )}

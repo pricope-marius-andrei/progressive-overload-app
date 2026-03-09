@@ -18,34 +18,39 @@ const WelcomeHeader: React.FC<WelcomeHeaderProps> = ({ onOpenGymPicker }) => {
   const gymNameLabel = user.gymName?.trim() || "Go to the gym";
 
   return (
-    <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">
-      <View className="flex flex-row justify-start items-center gap-2">
-        <View className="flex-row items-center gap-2 flex-1">
-          <View className="bg-indigo-50 rounded-full px-3 py-1">
-            <Text className="text-primary font-semibold">
-              {user.dailyStreak} day gym streak
-            </Text>
-          </View>
-          <View className=" bg-indigo-50 rounded-full px-3 py-1">
-            <Text className="text-primary font-semibold">
-              {user.experienceScore} XP
-            </Text>
-          </View>
+    <View className="mb-4 rounded-3xl border border-white/70 bg-white/65 px-5 py-5">
+      <Text className="text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
+        Overview
+      </Text>
+
+      <View className="mt-2 flex-row items-start justify-between gap-3">
+        <View className="flex-1">
+          <Text className="text-2xl font-bold text-indigo-950">
+            Welcome back
+          </Text>
+          <Text className="mt-1 text-sm text-indigo-700">{gymNameLabel}</Text>
         </View>
 
-        <Text
-          className="text-sm font-medium text-gray-600"
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {gymNameLabel}
-        </Text>
         <Pressable
-          className="h-9 w-9 rounded-full bg-indigo-50 items-center justify-center border border-indigo-100"
+          className="h-10 w-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-500"
           onPress={onOpenGymPicker}
+          disabled={!onOpenGymPicker}
         >
-          <Ionicons name="map-outline" size={18} color="#4f46e5" />
+          <Ionicons name="map-outline" size={18} color="#ffffff" />
         </Pressable>
+      </View>
+
+      <View className="mt-4 flex-row flex-wrap items-center gap-2">
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1.5">
+          <Text className="text-[12px] font-semibold text-indigo-700">
+            {user.dailyStreak} day streak
+          </Text>
+        </View>
+        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1.5">
+          <Text className="text-[12px] font-semibold text-indigo-700">
+            {user.experienceScore} XP
+          </Text>
+        </View>
       </View>
     </View>
   );

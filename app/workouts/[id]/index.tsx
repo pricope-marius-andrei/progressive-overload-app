@@ -6,11 +6,11 @@
  */
 
 import {
-  AddExerciseButton,
-  ExerciseModal,
-  ExercisesList,
-  WorkoutHeader,
-  XpGainPopup,
+    AddExerciseButton,
+    ExerciseModal,
+    ExercisesList,
+    WorkoutHeader,
+    XpGainPopup,
 } from "@/components";
 import { useWorkout } from "@/contexts/WorkoutContext";
 import React, { useCallback, useMemo, useRef } from "react";
@@ -104,14 +104,27 @@ const DayWorkoutScreen: React.FC = () => {
 
   return (
     <View
-      className="flex-1 bg-gray-50 px-5 pt-4 pb-2"
+      className="relative flex-1 bg-[#EEF2FF] px-5 pt-4 pb-2"
       {...panResponder.panHandlers}
     >
-      <WorkoutHeader />
-      <AddExerciseButton />
-      <ExercisesList />
-      <ExerciseModal />
-      <XpGainPopup />
+      <View
+        pointerEvents="none"
+        style={{ zIndex: 0 }}
+        className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[#6366F1]/15"
+      />
+      <View
+        pointerEvents="none"
+        style={{ zIndex: 0 }}
+        className="absolute top-32 -left-16 h-56 w-56 rounded-full bg-[#6366F1]/10"
+      />
+
+      <View className="flex-1" style={{ zIndex: 1 }}>
+        <WorkoutHeader />
+        <AddExerciseButton />
+        <ExercisesList />
+        <ExerciseModal />
+        <XpGainPopup />
+      </View>
     </View>
   );
 };

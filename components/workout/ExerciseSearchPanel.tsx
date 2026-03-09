@@ -54,22 +54,23 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
   };
 
   return (
-    <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+    <View className="mb-4 rounded-2xl border border-white/70 bg-white/65 p-4">
       <View className="flex-row justify-between items-center mb-3">
-        <Text className="text-lg font-semibold text-gray-900">
+        <Text className="text-lg font-semibold text-indigo-950">
           Search Exercises
         </Text>
         <TouchableOpacity
-          className="bg-gray-100 rounded-xl px-3 py-2"
+          className="rounded-xl border border-indigo-100 bg-white/80 px-3 py-2"
           onPress={() => setShowCustomEntry(true)}
         >
-          <Text className="text-gray-700 font-medium">Create Custom</Text>
+          <Text className="font-medium text-indigo-700">Create Custom</Text>
         </TouchableOpacity>
       </View>
 
       <TextInput
-        className="border border-gray-200 bg-gray-50 rounded-xl px-3 py-3 text-base mb-3"
+        className="mb-3 rounded-xl border border-indigo-100 bg-white/80 px-3 py-3 text-base text-indigo-950"
         placeholder="Search for exercises (e.g., Bench Press, Squats...)"
+        placeholderTextColor="#6366F1"
         value={searchQuery}
         onChangeText={(text) => {
           setSearchQuery(text);
@@ -80,13 +81,13 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
 
       {isSearching && (
         <View className="py-4 items-center">
-          <Text className="text-gray-500">Searching exercises...</Text>
+          <Text className="text-indigo-600">Searching exercises...</Text>
         </View>
       )}
 
       {searchResults.length > 0 && (
         <View className="max-h-72">
-          <Text className="text-sm font-medium text-gray-700 mb-2">
+          <Text className="mb-2 text-sm font-medium text-indigo-700">
             Found {searchResults.length} exercise
             {searchResults.length !== 1 ? "s" : ""}:
           </Text>
@@ -94,7 +95,7 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
             {searchResults.map((exercise) => (
               <TouchableOpacity
                 key={exercise.exerciseId}
-                className="flex-1 border border-gray-200 rounded-2xl p-3 mb-2 bg-gray-50"
+                className="mb-2 flex-1 rounded-2xl border border-indigo-100 bg-white/80 p-3"
                 onPress={() => selectApiExercise(exercise)}
               >
                 <View className="flex-row justify-between items-start">
@@ -109,14 +110,14 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
                         className="w-full h-32 rounded-xl object-cover"
                       />
                     )}
-                    <Text className="font-semibold text-gray-900">
+                    <Text className="font-semibold text-indigo-950">
                       {exercise.name}
                     </Text>
-                    <Text className="text-sm text-gray-600 mt-1">
+                    <Text className="mt-1 text-sm text-indigo-700">
                       Exercise from database
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color="#6b7280" />
+                  <Ionicons name="chevron-forward" size={16} color="#6366F1" />
                 </View>
               </TouchableOpacity>
             ))}
@@ -127,12 +128,12 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
       {searchQuery.length >= 2 &&
         !isSearching &&
         searchResults.length === 0 && (
-          <View className="py-4 items-center border border-dashed border-gray-300 rounded-xl">
-            <Text className="text-gray-500 mb-2">
+          <View className="items-center rounded-xl border border-dashed border-indigo-200 py-4">
+            <Text className="mb-2 text-indigo-600">
               No exercises found for &quot;{searchQuery}&quot;
             </Text>
             <TouchableOpacity
-              className="bg-primary rounded-xl px-4 py-2"
+              className="rounded-xl bg-indigo-500 px-4 py-2"
               onPress={() => {
                 setNewExerciseName(searchQuery);
                 setShowCustomEntry(true);
@@ -146,18 +147,18 @@ const ExerciseSearchPanel: React.FC<ExerciseSearchPanelProps> = ({
         )}
 
       {selectedApiExercise && (
-        <View className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 mt-3">
+        <View className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/80 p-3">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="font-semibold text-indigo-800">
                 Selected: {selectedApiExercise.name}
               </Text>
-              <Text className="text-sm text-primary">
+              <Text className="text-sm text-indigo-600">
                 Ready to add to workout
               </Text>
             </View>
             <TouchableOpacity
-              className="bg-white rounded-xl px-3 py-1 border border-indigo-200"
+              className="rounded-xl border border-indigo-100 bg-white/80 px-3 py-1"
               onPress={handleClearSelection}
             >
               <Text className="text-indigo-700 text-sm">Remove</Text>

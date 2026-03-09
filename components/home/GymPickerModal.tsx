@@ -411,28 +411,42 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={handleCloseModal}
     >
-      <View className="flex-1 bg-slate-100">
-        <View className="px-5 pt-6 pb-4 bg-white border-b border-slate-200">
+      <View className="relative flex-1 bg-[#EEF2FF]">
+        <View
+          pointerEvents="none"
+          style={{ zIndex: 0 }}
+          className="absolute -top-20 -right-16 h-56 w-56 rounded-full bg-[#6366F1]/15"
+        />
+        <View
+          pointerEvents="none"
+          style={{ zIndex: 0 }}
+          className="absolute top-24 -left-20 h-52 w-52 rounded-full bg-[#6366F1]/10"
+        />
+
+        <View
+          className="border-b border-white/70 bg-white/65 px-5 pb-4 pt-6"
+          style={{ zIndex: 1 }}
+        >
           <View className="flex-row items-start justify-between">
             <View>
-              <Text className="text-2xl font-extrabold text-slate-900">
+              <Text className="text-2xl font-semibold text-indigo-950">
                 Nearby Gyms
               </Text>
-              <Text className="text-xs text-slate-500 mt-1">
+              <Text className="mt-1 text-xs text-indigo-700">
                 {savedGymsCount} saved • {nearbyGymsCount} nearby
               </Text>
             </View>
 
             <Pressable
               onPress={handleCloseModal}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2"
+              className="rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-2"
             >
-              <Text className="text-slate-700 font-semibold">Close</Text>
+              <Text className="font-semibold text-indigo-700">Close</Text>
             </Pressable>
           </View>
 
-          <View className="mt-3 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
-            <Text className="text-xs text-sky-800">
+          <View className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
+            <Text className="text-xs text-indigo-700">
               Explore gyms on the map, save favorites, or pin your own location.
             </Text>
           </View>
@@ -441,15 +455,16 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         <ScrollView
           ref={scrollViewRef}
           className="flex-1"
+          style={{ zIndex: 1 }}
           contentContainerStyle={{ padding: 16, paddingBottom: 44 }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="rounded-3xl border border-slate-200 bg-white p-4 mb-4">
-            <Text className="text-[11px] font-semibold text-slate-500 tracking-wide uppercase">
+          <View className="mb-4 rounded-3xl border border-white/70 bg-white/65 p-4">
+            <Text className="text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
               Discovery Map
             </Text>
 
-            <Text className="text-sm text-slate-700 mt-1 mb-3">
+            <Text className="mb-3 mt-1 text-sm text-indigo-700">
               Tap a gym card to focus it, or long-press the map to drop a custom
               pin.
             </Text>
@@ -480,16 +495,16 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
             }}
           />
 
-          <View className="rounded-2xl border border-slate-200 bg-white p-3 mb-4">
+          <View className="mb-4 rounded-2xl border border-white/70 bg-white/65 p-3">
             <Pressable
-              className={`rounded-xl py-3 items-center justify-center ${isLoading ? "bg-slate-300" : "bg-slate-900"}`}
+              className={`items-center justify-center rounded-xl py-3 ${isLoading ? "bg-indigo-300" : "bg-indigo-500"}`}
               onPress={loadNearbyGyms}
               disabled={isLoading || isSaving}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Text className="text-white font-semibold">
+                <Text className="font-semibold text-white">
                   Refresh Nearby Gyms
                 </Text>
               )}

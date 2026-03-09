@@ -38,11 +38,11 @@ const ExercisesList: React.FC = () => {
 
   const ListEmptyComponent = useCallback(
     () => (
-      <View className="bg-white rounded-2xl border border-gray-100 p-8 items-center">
-        <Text className="text-gray-700 text-center font-semibold mb-1">
+      <View className="items-center rounded-2xl border border-white/70 bg-white/65 p-8">
+        <Text className="mb-1 text-center font-semibold text-indigo-900">
           No exercises yet
         </Text>
-        <Text className="text-gray-500 text-center">
+        <Text className="text-center text-indigo-700">
           No exercises found for {selectedSnapshotDate}.
         </Text>
       </View>
@@ -53,14 +53,14 @@ const ExercisesList: React.FC = () => {
   return (
     <View className="flex-1">
       <View className="flex-row items-center justify-between mb-1">
-        <Text className="text-lg font-semibold text-gray-900">Exercises</Text>
-        <View className="bg-white border border-gray-100 rounded-full px-3 py-1">
-          <Text className="text-sm font-semibold text-gray-600">
+        <Text className="text-lg font-semibold text-indigo-950">Exercises</Text>
+        <View className="rounded-full border border-indigo-100 bg-white/70 px-3 py-1">
+          <Text className="text-sm font-semibold text-indigo-700">
             {workoutExercises.length}
           </Text>
         </View>
       </View>
-      <Text className="text-sm text-gray-500 mb-3">
+      <Text className="mb-3 text-sm text-indigo-700">
         {workoutExercises.length > 0
           ? "Tap an exercise to edit sets and load progression."
           : `No entries for ${selectedSnapshotDate} yet.`}

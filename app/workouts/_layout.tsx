@@ -25,8 +25,8 @@ export default function WorkoutsLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
-        <ActivityIndicator size="small" color="#2563eb" />
+      <View className="flex-1 items-center justify-center bg-[#EEF2FF]">
+        <ActivityIndicator size="small" color="#6366F1" />
       </View>
     );
   }
@@ -36,7 +36,7 @@ export default function WorkoutsLayout() {
   }
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1 bg-[#EEF2FF]">
       <Stack
         screenOptions={{
           headerShown: false, // Hide headers for clean full-screen experience

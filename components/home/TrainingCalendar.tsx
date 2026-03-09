@@ -143,27 +143,32 @@ const TrainingCalendar: React.FC = () => {
   };
 
   return (
-    <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4">
-      <Text className="text-base font-semibold text-gray-900 mb-3">
+    <View className="mb-4 rounded-3xl border border-white/70 bg-white/65 p-5">
+      <Text className="mb-1 text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
+        Progress
+      </Text>
+      <Text className="mb-3 text-base font-semibold text-indigo-950">
         Training Calendar
       </Text>
 
       <View className="flex-row items-center justify-between mb-4">
-        <Text className="text-sm text-gray-500">{monthLabel}</Text>
+        <Text className="text-sm font-semibold text-indigo-700">
+          {monthLabel}
+        </Text>
 
         <View className="flex-row items-center">
           <TouchableOpacity
             className={`h-7 px-2 rounded-md border items-center justify-center mr-2 ${
               canJumpToLatestMonth
-                ? "border-gray-200"
-                : "border-gray-100 bg-gray-50"
+                ? "border-indigo-200 bg-indigo-50/80"
+                : "border-indigo-100 bg-indigo-50/40"
             }`}
             onPress={jumpToLatestMonth}
             disabled={!canJumpToLatestMonth}
           >
             <Text
               className={`text-xs font-medium ${
-                canJumpToLatestMonth ? "text-gray-600" : "text-gray-300"
+                canJumpToLatestMonth ? "text-indigo-700" : "text-indigo-300"
               }`}
             >
               Latest
@@ -173,14 +178,14 @@ const TrainingCalendar: React.FC = () => {
           <TouchableOpacity
             className={`h-8 w-8 rounded-full border items-center justify-center mr-2 ${
               canGoPreviousMonth
-                ? "border-gray-200"
-                : "border-gray-100 bg-gray-50"
+                ? "border-indigo-200 bg-indigo-50/80"
+                : "border-indigo-100 bg-indigo-50/40"
             }`}
             onPress={goToPreviousMonth}
             disabled={!canGoPreviousMonth}
           >
             <Text
-              className={`text-base ${canGoPreviousMonth ? "text-gray-600" : "text-gray-300"}`}
+              className={`text-base ${canGoPreviousMonth ? "text-indigo-700" : "text-indigo-300"}`}
             >
               {"<"}
             </Text>
@@ -188,13 +193,15 @@ const TrainingCalendar: React.FC = () => {
 
           <TouchableOpacity
             className={`h-8 w-8 rounded-full border items-center justify-center ${
-              canGoNextMonth ? "border-gray-200" : "border-gray-100 bg-gray-50"
+              canGoNextMonth
+                ? "border-indigo-200 bg-indigo-50/80"
+                : "border-indigo-100 bg-indigo-50/40"
             }`}
             onPress={goToNextMonth}
             disabled={!canGoNextMonth}
           >
             <Text
-              className={`text-base ${canGoNextMonth ? "text-gray-600" : "text-gray-300"}`}
+              className={`text-base ${canGoNextMonth ? "text-indigo-700" : "text-indigo-300"}`}
             >
               {">"}
             </Text>
@@ -205,7 +212,7 @@ const TrainingCalendar: React.FC = () => {
       <View className="flex-row mb-2">
         {WEEKDAY_LABELS.map((label) => (
           <View key={label} style={{ width: GRID_CELL_WIDTH }}>
-            <Text className="text-center text-xs font-medium text-gray-400">
+            <Text className="text-center text-xs font-medium text-indigo-400">
               {label}
             </Text>
           </View>
@@ -236,9 +243,9 @@ const TrainingCalendar: React.FC = () => {
               <View
                 className={`h-8 w-8 rounded-full items-center justify-center ${
                   hasTraining
-                    ? "bg-primary"
+                    ? "bg-indigo-500"
                     : isToday
-                      ? "border border-primary"
+                      ? "border border-indigo-400 bg-white/80"
                       : ""
                 }`}
               >
@@ -247,8 +254,8 @@ const TrainingCalendar: React.FC = () => {
                     hasTraining
                       ? "text-white"
                       : isToday
-                        ? "text-primary"
-                        : "text-gray-600"
+                        ? "text-indigo-700"
+                        : "text-indigo-900"
                   }`}
                 >
                   {day}
@@ -260,14 +267,14 @@ const TrainingCalendar: React.FC = () => {
       </View>
 
       <View className="mt-4 flex-row items-center">
-        <View className="h-2.5 w-2.5 rounded-full bg-primary mr-2" />
-        <Text className="text-xs text-gray-500">
+        <View className="mr-2 h-2.5 w-2.5 rounded-full bg-indigo-500" />
+        <Text className="text-xs text-indigo-700">
           Day with at least one training logged
         </Text>
       </View>
 
       {minAllowedMonth && maxAllowedMonth ? (
-        <Text className="text-xs text-gray-400 mt-2">
+        <Text className="mt-2 text-xs text-indigo-600">
           Range:{" "}
           {new Intl.DateTimeFormat(undefined, {
             month: "short",
@@ -280,7 +287,7 @@ const TrainingCalendar: React.FC = () => {
           }).format(maxAllowedMonth)}
         </Text>
       ) : (
-        <Text className="text-xs text-gray-400 mt-2">
+        <Text className="mt-2 text-xs text-indigo-600">
           No trainings registered yet.
         </Text>
       )}
