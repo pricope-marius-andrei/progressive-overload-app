@@ -70,10 +70,10 @@ export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
 
     const [progressResult, trainingDatesResult, myGymsResult] =
       await Promise.allSettled([
-      fetchAndUpdateAppProgress(deviceLocation),
-      fetchTrainingDateKeys(),
-      fetchMyGyms(),
-    ]);
+        fetchAndUpdateAppProgress(deviceLocation),
+        fetchTrainingDateKeys(),
+        fetchMyGyms(),
+      ]);
 
     if (progressResult.status === "fulfilled") {
       const progress = progressResult.value;

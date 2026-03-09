@@ -1,7 +1,7 @@
 import {
-  AppStateInsert,
-  GymPlaceInsert,
-  WorkoutInsert,
+    AppStateInsert,
+    GymPlaceInsert,
+    WorkoutInsert,
 } from "@/types/entities";
 import { Workout, toWorkout } from "@/types/mappers/workout.mapper";
 import { supabase } from "@/utils/supabase";
@@ -13,6 +13,8 @@ const DEFAULT_GYM_RADIUS_METERS = 120;
 const MIN_GYM_RADIUS_METERS = 20;
 const MAX_GYM_RADIUS_METERS = 1000;
 const CONSECUTIVE_CHECKIN_GAP_DAYS = 1;
+const KNOWN_GYM_MATCH_SEARCH_RADIUS_METERS = 250;
+const KNOWN_GYM_MATCH_DISTANCE_METERS = 180;
 
 export type DeviceLocation = {
   latitude: number;
@@ -136,6 +138,20 @@ const normalizeGymName = (
 
   const normalizedGymName = gymName.trim();
   return normalizedGymName.length > 0 ? normalizedGymName : null;
+};
+
+const canonicalizeGymName = (
+  gymName: string | null | undefined,
+): string | null => {
+  const normalizedGymName = normalizeGymName(gymName);
+  if (!normalizedGymName) {
+    return null;
+  }
+
+  return normalizedGymName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 };
 
 const toRadians = (value: number): number => (value * Math.PI) / 180;
@@ -427,22 +443,33 @@ export async function saveKnownGymPlace(input: {
   longitude: number;
 }): Promise<KnownGymPlace> {
   const normalizedName = normalizeGymName(input.name);
+  const canonicalName = canonicalizeGymName(input.name);
   if (!normalizedName) {
     throw new Error("Gym name is required.");
+  }
+
+  if (!canonicalName) {
+    throw new Error("Gym name is invalid.");
   }
 
   const existingNearbyGyms = await fetchNearbyKnownGyms({
     latitude: input.latitude,
     longitude: input.longitude,
-    radiusMeters: 100,
+    radiusMeters: KNOWN_GYM_MATCH_SEARCH_RADIUS_METERS,
   });
   const matchingGym = existingNearbyGyms.find(
     (gym) =>
-      gym.name.toLowerCase() === normalizedName.toLowerCase() &&
-      gym.distanceMeters <= 80,
+      canonicalizeGymName(gym.name) === canonicalName &&
+      gym.distanceMeters <= KNOWN_GYM_MATCH_DISTANCE_METERS,
   );
 
   if (matchingGym) {
+    // Refresh recency so recently used gyms remain easy to find in My Gyms.
+    await supabase
+      .from("gym_place")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", matchingGym.id);
+
     return matchingGym;
   }
 
