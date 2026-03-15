@@ -1,15 +1,14 @@
-import { supabase } from "@/utils/supabase";
+import { supabase, SUPABASE_CONFIG_ERROR } from "@/utils/supabase";
 import { Session } from "@supabase/supabase-js";
-import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import React, {
-    createContext,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
 } from "react";
 import { AuthContextType } from "./auth/auth.types";
 
@@ -112,6 +111,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    if (SUPABASE_CONFIG_ERROR) {
+      setAuthError(SUPABASE_CONFIG_ERROR);
+      setIsLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     const restoreSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
@@ -149,11 +156,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    if (SUPABASE_CONFIG_ERROR) {
+      setAuthError(SUPABASE_CONFIG_ERROR);
+      throw new Error(SUPABASE_CONFIG_ERROR);
+    }
+
     setAuthError(null);
     setIsSigningIn(true);
 
     try {
-      const redirectTo = Linking.createURL("auth/callback");
+      const redirectTo = "progressiveoverloadapp://auth/callback";
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -198,6 +210,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signOut = useCallback(async () => {
+    if (SUPABASE_CONFIG_ERROR) {
+      setAuthError(SUPABASE_CONFIG_ERROR);
+      throw new Error(SUPABASE_CONFIG_ERROR);
+    }
+
     setAuthError(null);
 
     const { error } = await supabase.auth.signOut();

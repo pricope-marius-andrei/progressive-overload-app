@@ -20,6 +20,7 @@ import {
   saveKnownGymPlace,
 } from "@/contexts/home/home.repository";
 import { getCurrentDeviceCoordinates } from "@/utils/location";
+import type { CameraRef } from "@maplibre/maplibre-react-native";
 import React, {
   useCallback,
   useEffect,
@@ -37,7 +38,6 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { LongPressEvent } from "react-native-maps";
 
 type GymPickerModalProps = {
   visible: boolean;
@@ -64,7 +64,7 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
     latitude: number;
     longitude: number;
   } | null>(null);
-  const mapRef = useRef<MapView | null>(null);
+  const cameraRef = useRef<CameraRef | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
   const mapSectionTopRef = useRef(0);
   const hasShownOpenStreetWarningRef = useRef(false);
@@ -93,33 +93,34 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
   }, [deviceCoordinates, focusedGym, nearbyGyms]);
 
   const focusMapOnGym = useCallback((gym: FocusedGym) => {
-    const nextRegion = {
-      latitude: gym.latitude,
-      longitude: gym.longitude,
-      latitudeDelta: 0.015,
-      longitudeDelta: 0.015,
-    };
-
     setFocusedGym(gym);
     scrollViewRef.current?.scrollTo({
       y: Math.max(0, mapSectionTopRef.current - 8),
       animated: true,
     });
-    mapRef.current?.animateToRegion(nextRegion, 450);
+
+    cameraRef.current?.setCamera({
+      centerCoordinate: [gym.longitude, gym.latitude],
+      zoomLevel: 15,
+      animationDuration: 450,
+      animationMode: "flyTo",
+    });
   }, []);
 
   const handleMapSectionLayout = useCallback((event: LayoutChangeEvent) => {
     mapSectionTopRef.current = event.nativeEvent.layout.y;
   }, []);
 
-  const handleMapLongPress = useCallback((event: LongPressEvent) => {
-    const coordinate = event.nativeEvent.coordinate;
-    setSelectedMapCoordinates({
-      latitude: coordinate.latitude,
-      longitude: coordinate.longitude,
-    });
-    setFocusedGym(null);
-  }, []);
+  const handleMapLongPress = useCallback(
+    (coordinate: { latitude: number; longitude: number }) => {
+      setSelectedMapCoordinates({
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      });
+      setFocusedGym(null);
+    },
+    [],
+  );
 
   const loadNearbyGyms = useCallback(async () => {
     setIsLoading(true);
@@ -321,15 +322,15 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         y: Math.max(0, mapSectionTopRef.current - 8),
         animated: true,
       });
-      mapRef.current?.animateToRegion(
-        {
-          latitude: latestCoordinates.latitude,
-          longitude: latestCoordinates.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        },
-        450,
-      );
+      cameraRef.current?.setCamera({
+        centerCoordinate: [
+          latestCoordinates.longitude,
+          latestCoordinates.latitude,
+        ],
+        zoomLevel: 16,
+        animationDuration: 450,
+        animationMode: "flyTo",
+      });
 
       Alert.alert(
         "Location Selected",
@@ -470,13 +471,12 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
             </Text>
 
             <MapSection
-              mapRef={mapRef}
+              cameraRef={cameraRef}
               mapCenter={mapCenter}
               deviceCoordinates={deviceCoordinates}
               nearbyGyms={nearbyGyms}
               focusedGym={focusedGym}
               selectedMapCoordinates={selectedMapCoordinates}
-              customGymName={customGymName}
               onMapSectionLayout={handleMapSectionLayout}
               onMapLongPress={handleMapLongPress}
             />

@@ -240,7 +240,7 @@ EXPO_PUBLIC_RAPIDAPI_KEY=your-rapidapi-key
 | `EXPO_PUBLIC_SUPABASE_KEY` | Supabase anonymous/public key |
 | `EXPO_PUBLIC_RAPIDAPI_KEY` | RapidAPI key for exercise search API |
 
-The Supabase client validates these at startup and throws if missing.
+The Supabase client validates these at startup and shows an auth configuration error if missing.
 
 ## Authentication Setup (Google + Supabase)
 
