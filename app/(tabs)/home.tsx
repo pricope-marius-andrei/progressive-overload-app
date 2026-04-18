@@ -22,7 +22,7 @@ type HomeHeaderProps = {
 
 const HomeHeader: React.FC<HomeHeaderProps> = ({ onOpenGymPicker }) => (
   <View className="mb-6">
-    <Header />
+    <Header onOpenGymPicker={onOpenGymPicker} />
     <TrainingCalendar />
     {/* <AddWorkoutForm /> */}
   </View>

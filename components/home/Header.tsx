@@ -3,30 +3,42 @@
  *
  * Displays welcome message and daily streak information
  */
+import { useHome } from "@/contexts";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import { Text, View } from "react-native";
+import React from "react";
+import { Pressable, Text, View } from "react-native";
 
-function Header() {
-  const [streak] = useState(0);
-  const [gymLabel] = useState("No Gym Selected");
+type HeaderProps = {
+  onOpenGymPicker?: () => void;
+};
+
+function Header({ onOpenGymPicker }: HeaderProps) {
+  const { user } = useHome();
+  const streak = user.dailyStreak;
+  const gymLabel = user.gymName ?? "No Gym Selected";
 
   return (
     <View className="flex-row justify-between items-center pb-10">
       <View className="flex-row items-center">
         <Ionicons
           name="flame"
-          size={35}
+          size={30}
           color="#f97316"
           accessibilityLabel="fire icon"
         />
-        <Text className="text-3xl font-black">{streak}</Text>
+        <Text className="text-2xl font-black">{streak}</Text>
       </View>
 
-      <View className="flex-row items-center gap-1">
-        <Text className="text-lg font-semibold text-gray-800">{gymLabel}</Text>
+      <Pressable
+        onPress={onOpenGymPicker}
+        disabled={!onOpenGymPicker}
+        className="flex-row items-center gap-1"
+        accessibilityRole="button"
+        accessibilityLabel="Open gym picker"
+      >
+        <Text className="text-2xl font-black text-gray-800">{gymLabel}</Text>
         <Ionicons name="chevron-down" size={20} color="black" />
-      </View>
+      </Pressable>
     </View>
   );
 }

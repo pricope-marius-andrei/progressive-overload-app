@@ -1,3 +1,4 @@
+import { useHome } from "@/contexts";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -15,7 +16,16 @@ const getStartOfToday = () => {
   return now;
 };
 
+const toDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 function TrainingCalendar() {
+  const { trainingDateKeys } = useHome();
   const [calendarWidth, setCalendarWidth] = useState(0);
   const [today, setToday] = useState(() => getStartOfToday());
   const [anchorDate, setAnchorDate] = useState(() => getStartOfToday());
@@ -37,6 +47,10 @@ function TrainingCalendar() {
   );
 
   const canGoForward = anchorDate.getTime() < today.getTime();
+  const trainingDateKeySet = useMemo(
+    () => new Set(trainingDateKeys),
+    [trainingDateKeys],
+  );
 
   const visibleDays = calendarWidth
     ? Math.max(
@@ -120,15 +134,24 @@ function TrainingCalendar() {
             className="flex-row-reverse items-center overflow-hidden"
             style={{ gap: DAY_GAP }}
           >
-            {days.map((day) => (
-              <CalendarDay
-                key={day.toISOString()}
-                day={day}
-                height={DAY_ITEM_WIDTH}
-                width={DAY_ITEM_WIDTH}
-                status={day.getTime() === today.getTime() ? "today" : "default"}
-              />
-            ))}
+            {days.map((day) => {
+              const isToday = day.getTime() === today.getTime();
+              const status = isToday
+                ? "today"
+                : trainingDateKeySet.has(toDateKey(day))
+                  ? "completed"
+                  : "default";
+
+              return (
+                <CalendarDay
+                  key={day.toISOString()}
+                  day={day}
+                  height={DAY_ITEM_WIDTH}
+                  width={DAY_ITEM_WIDTH}
+                  status={status}
+                />
+              );
+            })}
           </View>
         </View>
 
