@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -8,14 +8,16 @@ function CalendarDay({
   width,
   height,
   status,
+  onPress,
 }: {
   day: Date;
   width: number;
   height: number;
-  status: "default" | "completed" | "freezed" | "today";
+  status: "default" | "completed" | "freezed" | "selected";
+  onPress?: () => void;
 }) {
   const containerClassName =
-    status === "today"
+    status === "selected"
       ? "border-[#3B3DC9] bg-[#4B4DD9] border-4"
       : status === "completed"
         ? "border-[#bbf7d0] bg-[#dcfce7]"
@@ -24,7 +26,7 @@ function CalendarDay({
           : "border-indigo-100 bg-white/80";
 
   const textClassName =
-    status === "today"
+    status === "selected"
       ? "text-[#E1E2F4]"
       : status === "completed"
         ? "text-[#166534]"
@@ -33,7 +35,11 @@ function CalendarDay({
           : "text-black";
 
   return (
-    <View className="items-center" style={{ width: width }}>
+    <Pressable
+      onPress={onPress}
+      className="items-center"
+      style={{ width: width }}
+    >
       <Text className="font-bold text-base">{DAY_LABELS[day.getDay()]}</Text>
       <View
         style={{ width: width, height: height }}
@@ -43,7 +49,7 @@ function CalendarDay({
           {day.getDate()}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

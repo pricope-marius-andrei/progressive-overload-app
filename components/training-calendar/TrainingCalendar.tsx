@@ -27,6 +27,7 @@ function TrainingCalendar() {
   const { trainingDateKeys } = useHome();
   const [calendarWidth, setCalendarWidth] = useState(0);
   const [today, setToday] = useState(() => getStartOfToday());
+  const [selectedDate, setSelectedDate] = useState(() => getStartOfToday());
 
   useFocusEffect(
     useCallback(() => {
@@ -105,9 +106,9 @@ function TrainingCalendar() {
           }}
         >
           {days.map((day) => {
-            const isToday = day.getTime() === today.getTime();
-            const status = isToday
-              ? "today"
+            const isSelected = day.getTime() === selectedDate.getTime();
+            const status = isSelected
+              ? "selected"
               : trainingDateKeySet.has(toDateKey(day))
                 ? "completed"
                 : "default";
@@ -119,6 +120,7 @@ function TrainingCalendar() {
                 height={DAY_ITEM_WIDTH}
                 width={DAY_ITEM_WIDTH}
                 status={status}
+                onPress={() => setSelectedDate(day)}
               />
             );
           })}
