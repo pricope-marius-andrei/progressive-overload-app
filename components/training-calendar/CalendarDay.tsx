@@ -27,7 +27,7 @@ function CalendarDay({
         }`}
       >
         <Text
-          className={`text-xl font-black ${status === "today" ? "text-[#E1E2F4]" : "text-black"}`}
+          className={`text-2xl font-black ${status === "today" ? "text-[#E1E2F4]" : "text-black"}`}
         >
           {day.getDate()}
         </Text>

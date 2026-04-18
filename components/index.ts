@@ -11,7 +11,7 @@ export { AuthRequired } from "./auth";
 export {
     AddWorkoutForm,
     GymPickerModal,
-    WelcomeHeader,
+    Header,
     WorkoutItem,
     WorkoutsList
 } from "./home";
