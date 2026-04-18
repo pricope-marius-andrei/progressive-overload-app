@@ -6,7 +6,6 @@
 
 export { default as AddWorkoutForm } from "./AddWorkoutForm";
 export { default as GymPickerModal } from "./GymPickerModal";
-export { default as TrainingCalendar } from "./TrainingCalendar";
 export { default as WelcomeHeader } from "./WelcomeHeader";
 export { default as WorkoutItem } from "./WorkoutItem";
 export { default as WorkoutsList } from "./WorkoutsList";

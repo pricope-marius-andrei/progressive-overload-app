@@ -11,11 +11,12 @@ export { AuthRequired } from "./auth";
 export {
     AddWorkoutForm,
     GymPickerModal,
-    TrainingCalendar,
     WelcomeHeader,
     WorkoutItem,
     WorkoutsList
 } from "./home";
+
+export { TrainingCalendar } from "./training-calendar";
 
 // Workout screen components
 export {

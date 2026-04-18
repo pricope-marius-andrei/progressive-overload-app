@@ -5,13 +5,7 @@
  * Users can view their progress, start workouts, and track different training types.
  */
 
-import {
-    AddWorkoutForm,
-    GymPickerModal,
-    TrainingCalendar,
-    WelcomeHeader,
-    WorkoutsList,
-} from "@/components";
+import { GymPickerModal, TrainingCalendar, WorkoutsList } from "@/components";
 import { HomeProvider, useAuth, useHome } from "@/contexts";
 import { Redirect } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -23,9 +17,9 @@ type HomeHeaderProps = {
 
 const HomeHeader: React.FC<HomeHeaderProps> = ({ onOpenGymPicker }) => (
   <View className="mb-6">
-    <WelcomeHeader onOpenGymPicker={onOpenGymPicker} />
+    {/* <WelcomeHeader onOpenGymPicker={onOpenGymPicker} /> */}
     <TrainingCalendar />
-    <AddWorkoutForm />
+    {/* <AddWorkoutForm /> */}
   </View>
 );
 

@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import { LayoutChangeEvent, Pressable, Text, View } from "react-native";
+import CalendarDay from "./CalendarDay";
 
 const DAY_ITEM_WIDTH = 50;
 const DAY_GAP = 8;
 const ARROW_BUTTON_SIZE = 30;
 const CONTAINER_HORIZONTAL_PADDING = 0;
-const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const getStartOfToday = () => {
   const now = new Date();
@@ -121,33 +121,13 @@ function TrainingCalendar() {
             style={{ gap: DAY_GAP }}
           >
             {days.map((day) => (
-              <View
+              <CalendarDay
                 key={day.toISOString()}
-                className="items-center"
-                style={{ width: DAY_ITEM_WIDTH }}
-              >
-                <Text className="text-[10px] font-semibold text-indigo-400">
-                  {DAY_LABELS[day.getDay()]}
-                </Text>
-                <View
-                  style={{ width: DAY_ITEM_WIDTH, height: DAY_ITEM_WIDTH }}
-                  className={`items-center justify-center rounded-full border ${
-                    day.getTime() === today.getTime()
-                      ? "border-indigo-500 bg-indigo-100/80"
-                      : "border-indigo-100 bg-white/80"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm font-semibold ${
-                      day.getTime() === today.getTime()
-                        ? "text-indigo-700"
-                        : "text-indigo-700"
-                    }`}
-                  >
-                    {day.getDate()}
-                  </Text>
-                </View>
-              </View>
+                day={day}
+                height={DAY_ITEM_WIDTH}
+                width={DAY_ITEM_WIDTH}
+                status={day.getTime() === today.getTime() ? "today" : "default"}
+              />
             ))}
           </View>
         </View>
