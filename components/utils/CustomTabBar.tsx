@@ -73,6 +73,7 @@ export default function CustomTabBar({
                   color={isFocused ? "#6366f1" : "#9ca3af"}
                 />
                 <Text
+                  className="font-black"
                   style={{
                     fontSize: 12,
                     color: isFocused ? "#6366f1" : "#9ca3af",
