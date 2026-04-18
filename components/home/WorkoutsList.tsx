@@ -4,15 +4,14 @@
  * Virtualized list of all user workouts with empty state
  */
 
-import { useHome } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
 import React from "react";
 import {
-    FlatList,
-    ListRenderItemInfo,
-    RefreshControlProps,
-    Text,
-    View,
+  FlatList,
+  ListRenderItemInfo,
+  RefreshControlProps,
+  Text,
+  View,
 } from "react-native";
 import WorkoutItem from "./WorkoutItem";
 
@@ -42,11 +41,11 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   ListHeaderComponent,
   refreshControl,
 }) => {
-  const { workoutsList } = useHome();
+  // const { workoutsList } = useHome();
 
   return (
     <FlatList
-      data={workoutsList}
+      data={[]} // workoutsList
       renderItem={renderWorkoutItem}
       keyExtractor={keyExtractor}
       ListHeaderComponent={
@@ -58,12 +57,12 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
               <ListHeaderComponent />
             ))}
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-lg font-semibold text-indigo-950">
-              Start a session
+            <Text className="text-2xl font-black text-indigo-950">
+              Today&apos;s Activity
             </Text>
             <View className="rounded-full border border-indigo-100 bg-white/70 px-3 py-1">
               <Text className="text-sm font-semibold text-indigo-700">
-                {workoutsList.length}
+                0{/* {workoutsList.length} */}
               </Text>
             </View>
           </View>

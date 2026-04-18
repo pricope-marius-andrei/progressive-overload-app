@@ -34,7 +34,7 @@ const AuthCallbackScreen: React.FC = () => {
   }
 
   if (isAuthenticated) {
-    return <Redirect href="/(tabs)/home" />;
+    return <Redirect href="/(tabs)/Home" />;
   }
 
   return <Redirect href="/auth/prerequisite" />;

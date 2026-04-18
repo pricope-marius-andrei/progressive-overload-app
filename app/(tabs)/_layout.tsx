@@ -12,8 +12,8 @@
  * - Indigo color theme for active tabs
  */
 
+import CustomTabBar from "@/components/utils/CustomTabBar";
 import { useAuth } from "@/contexts";
-import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,55 +39,13 @@ export default function TabLayout() {
   }
 
   return (
-    <SafeAreaView className="flex-1">
+    <SafeAreaView className="flex-1" edges={["top"]}>
       <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
-          // Active tab color - Indigo theme
-          tabBarActiveTintColor: "#6366f1",
-          // Hide the header since we're using tabs
           headerShown: false,
         }}
-      >
-        {/* Home Tab - Main screen for gym progress tracking */}
-        <Tabs.Screen
-          name="home"
-          options={{
-            title: "Home",
-            /**
-             * Dynamic home icon that changes based on focus state
-             * @param color - Current tab color (active/inactive)
-             * @param focused - Whether this tab is currently selected
-             */
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "home" : "home-outline"}
-                color={color}
-                size={24}
-              />
-            ),
-          }}
-        />
-
-        {/* Profile Tab - User information and goals */}
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: "Profile",
-            /**
-             * Dynamic profile icon that changes based on focus state
-             * @param color - Current tab color (active/inactive)
-             * @param focused - Whether this tab is currently selected
-             */
-            tabBarIcon: ({ color, focused }) => (
-              <Ionicons
-                name={focused ? "person" : "person-outline"}
-                color={color}
-                size={24}
-              />
-            ),
-          }}
-        />
-      </Tabs>
+      ></Tabs>
     </SafeAreaView>
   );
 }

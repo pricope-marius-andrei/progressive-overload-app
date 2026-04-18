@@ -20,15 +20,16 @@ type HomeHeaderProps = {
   onOpenGymPicker: () => void;
 };
 
-const HomeHeader: React.FC<HomeHeaderProps> = ({ onOpenGymPicker }) => (
-  <View className="mb-6">
-    <Header onOpenGymPicker={onOpenGymPicker} />
-    <TrainingCalendar />
-    {/* <AddWorkoutForm /> */}
-  </View>
-);
+function HomeHeader({ onOpenGymPicker }: HomeHeaderProps) {
+  return (
+    <View className="mb-6">
+      <Header onOpenGymPicker={onOpenGymPicker} />
+      <TrainingCalendar />
+    </View>
+  );
+}
 
-const HomeContent: React.FC = () => {
+function HomeContent() {
   const { refreshHomeState } = useHome();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isGymPickerVisible, setIsGymPickerVisible] = useState(false);
@@ -65,13 +66,13 @@ const HomeContent: React.FC = () => {
       </View>
     </View>
   );
-};
+}
 
 /**
  * Home screen component - Main dashboard
  * Wrapped with HomeProvider for state management
  */
-const Home: React.FC = () => {
+function Home() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -91,6 +92,6 @@ const Home: React.FC = () => {
       <HomeContent />
     </HomeProvider>
   );
-};
+}
 
 export default Home;
