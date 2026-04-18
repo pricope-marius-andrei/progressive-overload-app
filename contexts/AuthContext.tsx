@@ -1,5 +1,6 @@
 import { supabase, SUPABASE_CONFIG_ERROR } from "@/utils/supabase";
 import { Session } from "@supabase/supabase-js";
+import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import React, {
   createContext,
@@ -165,7 +166,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsSigningIn(true);
 
     try {
-      const redirectTo = "progressiveoverloadapp://auth/callback";
+      const redirectTo = Linking.createURL("/");
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
