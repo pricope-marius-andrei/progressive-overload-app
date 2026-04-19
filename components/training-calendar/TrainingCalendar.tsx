@@ -1,12 +1,12 @@
 import { useHome } from "@/contexts";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, LayoutChangeEvent, Text, View } from "react-native";
 import CalendarDay from "./CalendarDay";
 
-const DAY_ITEM_WIDTH = 40;
+const DAY_ITEM_WIDTH = 45;
 const DAY_GAP = 8;
-const CONTAINER_HORIZONTAL_PADDING = 0;
+const CONTAINER_HORIZONTAL_PADDING = -20;
 const MAX_PAGE_COUNT = 10;
 
 const getStartOfToday = () => {
@@ -25,9 +25,11 @@ const toDateKey = (date: Date): string => {
 
 function TrainingCalendar() {
   const { trainingDateKeys } = useHome();
+  const flatListRef = useRef<FlatList<number>>(null);
   const [calendarWidth, setCalendarWidth] = useState(0);
   const [today, setToday] = useState(() => getStartOfToday());
   const [selectedDate, setSelectedDate] = useState(() => getStartOfToday());
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -90,40 +92,51 @@ function TrainingCalendar() {
     return items;
   };
 
+  const getPageTitle = (pageIndex: number) => {
+    const pageDays = getDaysForPage(pageIndex);
+    const pageDate = pageDays[0] ?? today;
+
+    return `${pageDate.getFullYear()} - ${pageDate.toLocaleString("default", {
+      month: "long",
+    })}`;
+  };
+
   const renderPage = ({ item: pageIndex }: { item: number }) => {
     const days = getDaysForPage(pageIndex);
 
     return (
-      <View
-        className="items-center justify-center"
-        style={{ width: calendarWidth || undefined }}
-      >
+      <View>
         <View
-          className="flex-row-reverse items-center"
-          style={{
-            gap: DAY_GAP,
-            minWidth: visibleDays * (DAY_ITEM_WIDTH + DAY_GAP),
-          }}
+          className="items-center justify-center"
+          style={{ width: calendarWidth || undefined }}
         >
-          {days.map((day) => {
-            const isSelected = day.getTime() === selectedDate.getTime();
-            const status = isSelected
-              ? "selected"
-              : trainingDateKeySet.has(toDateKey(day))
-                ? "completed"
-                : "default";
+          <View
+            className="flex-row-reverse items-center"
+            style={{
+              gap: DAY_GAP,
+              minWidth: visibleDays * (DAY_ITEM_WIDTH + DAY_GAP),
+            }}
+          >
+            {days.map((day) => {
+              const isSelected = day.getTime() === selectedDate.getTime();
+              const status = isSelected
+                ? "selected"
+                : trainingDateKeySet.has(toDateKey(day))
+                  ? "completed"
+                  : "default";
 
-            return (
-              <CalendarDay
-                key={day.toISOString()}
-                day={day}
-                height={DAY_ITEM_WIDTH}
-                width={DAY_ITEM_WIDTH}
-                status={status}
-                onPress={() => setSelectedDate(day)}
-              />
-            );
-          })}
+              return (
+                <CalendarDay
+                  key={day.toISOString()}
+                  day={day}
+                  height={DAY_ITEM_WIDTH}
+                  width={DAY_ITEM_WIDTH}
+                  status={status}
+                  onPress={() => setSelectedDate(day)}
+                />
+              );
+            })}
+          </View>
         </View>
       </View>
     );
@@ -131,7 +144,11 @@ function TrainingCalendar() {
 
   return (
     <View onLayout={handleLayout} className="flex-1">
+      <Text className="mb-4 ml-2 text-lg font-bold">
+        {getPageTitle(currentPageIndex)}
+      </Text>
       <FlatList
+        ref={flatListRef}
         data={pages}
         horizontal
         inverted
@@ -140,6 +157,14 @@ function TrainingCalendar() {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.toString()}
         renderItem={renderPage}
+        onViewableItemsChanged={({ viewableItems }) => {
+          const visiblePage = viewableItems[0]?.index;
+
+          if (typeof visiblePage === "number") {
+            setCurrentPageIndex(visiblePage);
+          }
+        }}
+        viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
         getItemLayout={(_, index) => ({
           index,
           length: calendarWidth,
