@@ -26,7 +26,7 @@ const AddWorkoutForm: React.FC = () => {
 
   return (
     <View className="mb-5 gap-3">
-      <Text className="text-2xl font-black">Create workout</Text>
+      <Text className="text-2xl font-black">Create workout template</Text>
 
       <View className="flex-row items-center gap-3">
         <TextInput

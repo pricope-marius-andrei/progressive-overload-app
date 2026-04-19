@@ -47,6 +47,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
         hasAnyDeleteModeActive={activeDeleteWorkoutId !== null}
         onEnterDeleteMode={() => setActiveDeleteWorkoutId(item.id)}
         onExitDeleteMode={() => setActiveDeleteWorkoutId(null)}
+        subtitle="Template workout"
       />
     ),
     [activeDeleteWorkoutId],
@@ -57,7 +58,7 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
       data={workoutsList}
       renderItem={renderWorkoutItem}
       keyExtractor={keyExtractor}
-      className="bg-white p-7"
+      className="flex-1"
       ListHeaderComponent={
         <>
           {ListHeaderComponent &&
@@ -78,6 +79,11 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
       }
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}
+      contentContainerStyle={{
+        paddingHorizontal: 20,
+        paddingTop: 16,
+        paddingBottom: 28,
+      }}
       onScrollBeginDrag={() => {
         if (activeDeleteWorkoutId !== null) {
           setActiveDeleteWorkoutId(null);

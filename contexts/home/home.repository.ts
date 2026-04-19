@@ -15,6 +15,7 @@ const MAX_GYM_RADIUS_METERS = 1000;
 const CONSECUTIVE_CHECKIN_GAP_DAYS = 1;
 const KNOWN_GYM_MATCH_SEARCH_RADIUS_METERS = 250;
 const KNOWN_GYM_MATCH_DISTANCE_METERS = 180;
+let workoutActivitySchemaAvailable: boolean | null = null;
 
 export type DeviceLocation = {
   latitude: number;
@@ -128,6 +129,35 @@ const sortDateKeysDescending = (left: string, right: string): number => {
 
   return left < right ? 1 : -1;
 };
+
+async function hasWorkoutActivitySchema(): Promise<boolean> {
+  if (workoutActivitySchemaAvailable !== null) {
+    return workoutActivitySchemaAvailable;
+  }
+
+  const { error } = await supabase
+    .from("workout")
+    .select("id,activity_date,template_workout_id")
+    .limit(1);
+
+  if (!error) {
+    workoutActivitySchemaAvailable = true;
+    return true;
+  }
+
+  const message = error.message.toLowerCase();
+  const missingColumnError =
+    message.includes("activity_date") ||
+    message.includes("template_workout_id") ||
+    message.includes("schema cache");
+
+  if (missingColumnError) {
+    workoutActivitySchemaAvailable = false;
+    return false;
+  }
+
+  throw new Error(error.message);
+}
 
 const normalizeGymName = (
   gymName: string | null | undefined,
@@ -545,9 +575,31 @@ export async function detectCurrentGymName(
 }
 
 export async function fetchWorkouts(): Promise<Workout[]> {
+  const supportsActivitySchema = await hasWorkoutActivitySchema();
+  const baseQuery = supabase.from("workout").select().is("deleted_at", null);
+  const { data, error } = supportsActivitySchema
+    ? await baseQuery.is("activity_date", null)
+    : await baseQuery;
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []).map(toWorkout);
+}
+
+export async function fetchTodayActivityWorkouts(
+  dateKey: string = getTodayDateKey(),
+): Promise<Workout[]> {
+  const supportsActivitySchema = await hasWorkoutActivitySchema();
+  if (!supportsActivitySchema) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("workout")
     .select()
+    .eq("activity_date", dateKey)
     .is("deleted_at", null);
 
   if (error) {
@@ -557,21 +609,156 @@ export async function fetchWorkouts(): Promise<Workout[]> {
   return (data ?? []).map(toWorkout);
 }
 
+export async function addTemplateWorkoutToTodayActivity(
+  templateWorkoutId: number,
+  dateKey: string = getTodayDateKey(),
+): Promise<Workout> {
+  const supportsActivitySchema = await hasWorkoutActivitySchema();
+  if (!supportsActivitySchema) {
+    throw new Error(
+      "Daily activity requires migration: missing workout.activity_date/template_workout_id columns.",
+    );
+  }
+
+  const { data: existingDailyWorkout } = await supabase
+    .from("workout")
+    .select("id")
+    .eq("template_workout_id", templateWorkoutId)
+    .eq("activity_date", dateKey)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (existingDailyWorkout) {
+    const { data, error } = await supabase
+      .from("workout")
+      .select()
+      .eq("id", existingDailyWorkout.id)
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return toWorkout(data);
+  }
+
+  const { data: templateWorkout, error: templateError } = await supabase
+    .from("workout")
+    .select("id, name")
+    .eq("id", templateWorkoutId)
+    .is("activity_date", null)
+    .is("deleted_at", null)
+    .single();
+
+  if (templateError) {
+    throw new Error(templateError.message);
+  }
+
+  const { data: createdDailyWorkout, error: createDailyWorkoutError } =
+    await supabase
+      .from("workout")
+      .insert({
+        name: templateWorkout.name,
+        activity_date: dateKey,
+        template_workout_id: templateWorkout.id,
+      })
+      .select()
+      .single();
+
+  if (createDailyWorkoutError) {
+    throw new Error(createDailyWorkoutError.message);
+  }
+
+  const { data: templateExercises, error: templateExercisesError } =
+    await supabase
+      .from("exercise")
+      .select("id, name")
+      .eq("workout_id", templateWorkoutId)
+      .is("deleted_at", null);
+
+  if (templateExercisesError) {
+    throw new Error(templateExercisesError.message);
+  }
+
+  for (const templateExercise of templateExercises ?? []) {
+    const { data: createdExercise, error: createdExerciseError } =
+      await supabase
+        .from("exercise")
+        .insert({
+          workout_id: createdDailyWorkout.id,
+          name: templateExercise.name,
+        })
+        .select("id")
+        .single();
+
+    if (createdExerciseError) {
+      throw new Error(createdExerciseError.message);
+    }
+
+    const { data: templateSets, error: templateSetsError } = await supabase
+      .from("excercise_set")
+      .select("reps, weight")
+      .eq("exercise_id", templateExercise.id);
+
+    if (templateSetsError) {
+      throw new Error(templateSetsError.message);
+    }
+
+    if ((templateSets ?? []).length === 0) {
+      continue;
+    }
+
+    const { error: copySetsError } = await supabase
+      .from("excercise_set")
+      .insert(
+        (templateSets ?? []).map((set) => ({
+          exercise_id: createdExercise.id,
+          reps: set.reps,
+          weight: set.weight,
+        })),
+      );
+
+    if (copySetsError) {
+      throw new Error(copySetsError.message);
+    }
+  }
+
+  return toWorkout(createdDailyWorkout);
+}
+
 export async function fetchTrainingDateKeys(): Promise<string[]> {
-  const { data, error } = await supabase
+  const { data: snapshotData, error: snapshotError } = await supabase
     .from("exercise_daily_snapshot")
     .select("snapshot_date")
     .order("snapshot_date", { ascending: false });
 
-  if (error) {
-    throw new Error(error.message);
+  if (snapshotError) {
+    throw new Error(snapshotError.message);
   }
 
-  if (!data || data.length === 0) {
-    return [];
+  const supportsActivitySchema = await hasWorkoutActivitySchema();
+  let activityDates: string[] = [];
+
+  if (supportsActivitySchema) {
+    const { data: activityData, error: activityError } = await supabase
+      .from("workout")
+      .select("activity_date")
+      .not("activity_date", "is", null)
+      .is("deleted_at", null)
+      .order("activity_date", { ascending: false });
+
+    if (activityError) {
+      throw new Error(activityError.message);
+    }
+
+    activityDates = (activityData ?? [])
+      .map((row) => row.activity_date)
+      .filter((date): date is string => typeof date === "string");
   }
 
-  return [...new Set(data.map((row) => row.snapshot_date))].sort(
+  const snapshotDates = (snapshotData ?? []).map((row) => row.snapshot_date);
+
+  return [...new Set([...snapshotDates, ...activityDates])].sort(
     sortDateKeysDescending,
   );
 }

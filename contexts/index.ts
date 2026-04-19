@@ -16,6 +16,13 @@ export type { DashboardContextType } from "./home/home.types";
 export type { WorkoutsListContextType } from "./home/home.types";
 export { useWorkoutsList, WorkoutsListProvider } from "./WorkoutsListContext";
 
+// Today Activity context (home tab)
+export type { TodayActivityContextType } from "./home/home.types";
+export {
+    TodayActivityProvider,
+    useTodayActivity
+} from "./TodayActivityContext";
+
 // Workout context (individual workout screen)
 export type { WorkoutContextType } from "./workout/workout.types";
 export { useWorkout, WorkoutProvider } from "./WorkoutContext";

@@ -1,7 +1,7 @@
 import { AddWorkoutForm, WorkoutsList } from "@/components";
 import { useWorkoutsList } from "@/contexts";
 import React, { useCallback, useState } from "react";
-import { RefreshControl } from "react-native";
+import { RefreshControl, View } from "react-native";
 
 function Workouts() {
   const { refreshWorkoutsList } = useWorkoutsList();
@@ -17,13 +17,20 @@ function Workouts() {
   }, [refreshWorkoutsList]);
 
   return (
-    <WorkoutsList
-      title="Workouts"
-      ListHeaderComponent={<AddWorkoutForm />}
-      refreshControl={
-        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-      }
-    />
+    <View className="flex-1 bg-white">
+      <View className="flex-1">
+        <WorkoutsList
+          title="Workout Templates"
+          ListHeaderComponent={<AddWorkoutForm />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+            />
+          }
+        />
+      </View>
+    </View>
   );
 }
 

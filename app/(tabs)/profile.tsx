@@ -25,22 +25,8 @@ const Profile: React.FC = () => {
     "Athlete";
 
   return (
-    <View className="relative flex-1 items-center justify-center bg-[#EEF2FF] px-5 py-8">
-      <View
-        pointerEvents="none"
-        style={{ zIndex: 0 }}
-        className="absolute -top-24 -right-20 h-64 w-64 rounded-full bg-[#6366F1]/15"
-      />
-      <View
-        pointerEvents="none"
-        style={{ zIndex: 0 }}
-        className="absolute bottom-12 -left-16 h-56 w-56 rounded-full bg-[#6366F1]/10"
-      />
-
-      <View
-        style={{ zIndex: 1 }}
-        className="w-full max-w-md rounded-3xl border border-white/70 bg-white/65 p-6"
-      >
+    <View className="flex-1 items-center justify-center bg-[#EEF2FF] px-5 py-8">
+      <View className="w-full max-w-md rounded-3xl border border-white/70 bg-white/65 p-6">
         <View className="mb-4 self-start rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1">
           <Text className="text-xs font-semibold uppercase tracking-wide text-indigo-700">
             Account

@@ -16,6 +16,9 @@ interface WorkoutItemProps {
   hasAnyDeleteModeActive: boolean;
   onEnterDeleteMode: () => void;
   onExitDeleteMode: () => void;
+  onOpenWorkout?: (workout: Workout) => void;
+  onDeleteWorkout?: (workout: Workout) => Promise<void>;
+  subtitle?: string;
 }
 
 function WorkoutItem({
@@ -24,8 +27,14 @@ function WorkoutItem({
   hasAnyDeleteModeActive,
   onEnterDeleteMode,
   onExitDeleteMode,
+  onOpenWorkout,
+  onDeleteWorkout,
+  subtitle,
 }: WorkoutItemProps) {
   const { navigateToWorkout, handleDeleteWorkout } = useWorkoutsList();
+
+  const openWorkout = onOpenWorkout ?? navigateToWorkout;
+  const deleteWorkout = onDeleteWorkout ?? handleDeleteWorkout;
 
   const handleConfirmDeleteWorkout = () => {
     Alert.alert(
@@ -39,7 +48,9 @@ function WorkoutItem({
         {
           text: "Delete",
           style: "destructive",
-          onPress: () => handleDeleteWorkout(workout),
+          onPress: () => {
+            void deleteWorkout(workout);
+          },
         },
       ],
     );
@@ -60,7 +71,7 @@ function WorkoutItem({
           return;
         }
 
-        navigateToWorkout(workout);
+        openWorkout(workout);
       }}
       className={`relative mb-3 rounded-2xl border-solid border-4 p-4 ${
         isDeleteMode
@@ -108,7 +119,9 @@ function WorkoutItem({
           <Text
             className={`text-xl ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
           >
-            {isDeleteMode ? "Delete mode active" : "Tap to open and log sets"}
+            {isDeleteMode
+              ? "Delete mode active"
+              : (subtitle ?? "Tap to open and log sets")}
           </Text>
         </View>
       </View>

@@ -412,22 +412,8 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={handleCloseModal}
     >
-      <View className="relative flex-1 bg-[#EEF2FF]">
-        <View
-          pointerEvents="none"
-          style={{ zIndex: 0 }}
-          className="absolute -top-20 -right-16 h-56 w-56 rounded-full bg-[#6366F1]/15"
-        />
-        <View
-          pointerEvents="none"
-          style={{ zIndex: 0 }}
-          className="absolute top-24 -left-20 h-52 w-52 rounded-full bg-[#6366F1]/10"
-        />
-
-        <View
-          className="border-b border-white/70 bg-white/65 px-5 pb-4 pt-6"
-          style={{ zIndex: 1 }}
-        >
+      <View className="flex-1 bg-[#EEF2FF]">
+        <View className="border-b border-white/70 bg-white/65 px-5 pb-4 pt-6">
           <View className="flex-row items-start justify-between">
             <View>
               <Text className="text-2xl font-semibold text-indigo-950">
@@ -456,7 +442,6 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         <ScrollView
           ref={scrollViewRef}
           className="flex-1"
-          style={{ zIndex: 1 }}
           contentContainerStyle={{ padding: 16, paddingBottom: 44 }}
           showsVerticalScrollIndicator={false}
         >

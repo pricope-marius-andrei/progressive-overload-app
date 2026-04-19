@@ -1,4 +1,4 @@
-import { useDashboard } from "@/contexts";
+import { useDashboard, useTodayActivity } from "@/contexts";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, LayoutChangeEvent, Text, View } from "react-native";
@@ -25,11 +25,21 @@ const toDateKey = (date: Date): string => {
 
 function TrainingCalendar() {
   const { trainingDateKeys } = useDashboard();
+  const { selectedActivityDateKey, setSelectedActivityDateKey } =
+    useTodayActivity();
   const flatListRef = useRef<FlatList<number>>(null);
   const [calendarWidth, setCalendarWidth] = useState(0);
   const [today, setToday] = useState(() => getStartOfToday());
-  const [selectedDate, setSelectedDate] = useState(() => getStartOfToday());
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
+  const selectedDate = useMemo(() => {
+    const normalized = new Date(`${selectedActivityDateKey}T00:00:00`);
+    if (Number.isNaN(normalized.getTime())) {
+      return getStartOfToday();
+    }
+
+    return normalized;
+  }, [selectedActivityDateKey]);
 
   useFocusEffect(
     useCallback(() => {
@@ -132,7 +142,7 @@ function TrainingCalendar() {
                   height={DAY_ITEM_WIDTH}
                   width={DAY_ITEM_WIDTH}
                   status={status}
-                  onPress={() => setSelectedDate(day)}
+                  onPress={() => setSelectedActivityDateKey(toDateKey(day))}
                 />
               );
             })}

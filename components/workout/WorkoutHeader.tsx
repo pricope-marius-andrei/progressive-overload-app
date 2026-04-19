@@ -7,7 +7,6 @@
 import { useWorkout } from "@/contexts/WorkoutContext";
 import React from "react";
 import { Text, View } from "react-native";
-import WorkoutDatePicker from "./WorkoutDatePicker";
 
 const WorkoutHeader: React.FC = () => {
   const { workoutName } = useWorkout();
@@ -18,11 +17,9 @@ const WorkoutHeader: React.FC = () => {
       <Text className="mb-4 text-2xl font-semibold text-indigo-950">
         {workoutName}
       </Text>
-      <Text className="mb-3 text-indigo-700">
-        Pick a day to view and edit your exercise log.
+      <Text className="text-indigo-700">
+        Log sets and track performance evolution per exercise.
       </Text>
-
-      <WorkoutDatePicker />
     </View>
   );
 };

@@ -21,6 +21,16 @@ export interface WorkoutsListContextType {
   navigateToWorkout: (workout: Workout) => void;
 }
 
+export interface TodayActivityContextType {
+  todaysWorkouts: Workout[];
+  selectedActivityDateKey: string;
+  setSelectedActivityDateKey: (dateKey: string) => void;
+  refreshTodayActivity: () => Promise<void>;
+  addTemplateToTodayActivity: (templateWorkout: Workout) => Promise<void>;
+  removeTodayActivityWorkout: (workout: Workout) => Promise<void>;
+  navigateToTodayWorkout: (workout: Workout) => void;
+}
+
 /**
  * @deprecated Use DashboardContextType and WorkoutsListContextType instead
  */

@@ -4,341 +4,358 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[]
+  | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
+    PostgrestVersion: "14.1";
+  };
   public: {
     Tables: {
       app_state: {
         Row: {
-          created_at: string
-          daily_streak: number
-          experience_score: number
-          gym_latitude: number | null
-          gym_longitude: number | null
-          gym_name: string | null
-          gym_radius_m: number
-          id: number
-          last_gym_checkin_date: string | null
-          last_monthly_bonus_period: string | null
-          last_open_date: string | null
-          updated_at: string
-          user_id: string | null
-        }
+          created_at: string;
+          daily_streak: number;
+          experience_score: number;
+          gym_latitude: number | null;
+          gym_longitude: number | null;
+          gym_name: string | null;
+          gym_radius_m: number;
+          id: number;
+          last_gym_checkin_date: string | null;
+          last_monthly_bonus_period: string | null;
+          last_open_date: string | null;
+          updated_at: string;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          daily_streak?: number
-          experience_score?: number
-          gym_latitude?: number | null
-          gym_longitude?: number | null
-          gym_name?: string | null
-          gym_radius_m?: number
-          id?: number
-          last_gym_checkin_date?: string | null
-          last_monthly_bonus_period?: string | null
-          last_open_date?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
+          created_at?: string;
+          daily_streak?: number;
+          experience_score?: number;
+          gym_latitude?: number | null;
+          gym_longitude?: number | null;
+          gym_name?: string | null;
+          gym_radius_m?: number;
+          id?: number;
+          last_gym_checkin_date?: string | null;
+          last_monthly_bonus_period?: string | null;
+          last_open_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          daily_streak?: number
-          experience_score?: number
-          gym_latitude?: number | null
-          gym_longitude?: number | null
-          gym_name?: string | null
-          gym_radius_m?: number
-          id?: number
-          last_gym_checkin_date?: string | null
-          last_monthly_bonus_period?: string | null
-          last_open_date?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          daily_streak?: number;
+          experience_score?: number;
+          gym_latitude?: number | null;
+          gym_longitude?: number | null;
+          gym_name?: string | null;
+          gym_radius_m?: number;
+          id?: number;
+          last_gym_checkin_date?: string | null;
+          last_monthly_bonus_period?: string | null;
+          last_open_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       excercise_set: {
         Row: {
-          created_at: string
-          exercise_id: number
-          id: number
-          reps: number | null
-          updated_at: string
-          user_id: string | null
-          weight: number | null
-        }
+          created_at: string;
+          exercise_id: number;
+          id: number;
+          reps: number | null;
+          updated_at: string;
+          user_id: string | null;
+          weight: number | null;
+        };
         Insert: {
-          created_at?: string
-          exercise_id: number
-          id?: number
-          reps?: number | null
-          updated_at?: string
-          user_id?: string | null
-          weight?: number | null
-        }
+          created_at?: string;
+          exercise_id: number;
+          id?: number;
+          reps?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+          weight?: number | null;
+        };
         Update: {
-          created_at?: string
-          exercise_id?: number
-          id?: number
-          reps?: number | null
-          updated_at?: string
-          user_id?: string | null
-          weight?: number | null
-        }
+          created_at?: string;
+          exercise_id?: number;
+          id?: number;
+          reps?: number | null;
+          updated_at?: string;
+          user_id?: string | null;
+          weight?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "workout_set_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercise"
-            referencedColumns: ["id"]
+            foreignKeyName: "workout_set_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercise";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       exercise: {
         Row: {
-          created_at: string
-          deleted_at: string | null
-          id: number
-          name: string
-          updated_at: string
-          user_id: string | null
-          workout_id: number
-        }
+          created_at: string;
+          deleted_at: string | null;
+          id: number;
+          name: string;
+          updated_at: string;
+          user_id: string | null;
+          workout_id: number;
+        };
         Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          id?: number
-          name: string
-          updated_at?: string
-          user_id?: string | null
-          workout_id: number
-        }
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: number;
+          name: string;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id: number;
+        };
         Update: {
-          created_at?: string
-          deleted_at?: string | null
-          id?: number
-          name?: string
-          updated_at?: string
-          user_id?: string | null
-          workout_id?: number
-        }
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: number;
+          name?: string;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "exercise_workout_id_fkey"
-            columns: ["workout_id"]
-            isOneToOne: false
-            referencedRelation: "workout"
-            referencedColumns: ["id"]
+            foreignKeyName: "exercise_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       exercise_daily_snapshot: {
         Row: {
-          created_at: string
-          exercise_id: number
-          id: number
-          snapshot_date: string
-          snapshot_state: Json
-          updated_at: string
-          user_id: string | null
-          workout_id: number
-        }
+          created_at: string;
+          exercise_id: number;
+          id: number;
+          snapshot_date: string;
+          snapshot_state: Json;
+          updated_at: string;
+          user_id: string | null;
+          workout_id: number;
+        };
         Insert: {
-          created_at?: string
-          exercise_id: number
-          id?: number
-          snapshot_date?: string
-          snapshot_state: Json
-          updated_at?: string
-          user_id?: string | null
-          workout_id: number
-        }
+          created_at?: string;
+          exercise_id: number;
+          id?: number;
+          snapshot_date?: string;
+          snapshot_state: Json;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id: number;
+        };
         Update: {
-          created_at?: string
-          exercise_id?: number
-          id?: number
-          snapshot_date?: string
-          snapshot_state?: Json
-          updated_at?: string
-          user_id?: string | null
-          workout_id?: number
-        }
+          created_at?: string;
+          exercise_id?: number;
+          id?: number;
+          snapshot_date?: string;
+          snapshot_state?: Json;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "exercise_daily_snapshot_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercise"
-            referencedColumns: ["id"]
+            foreignKeyName: "exercise_daily_snapshot_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: false;
+            referencedRelation: "exercise";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "exercise_daily_snapshot_workout_id_fkey"
-            columns: ["workout_id"]
-            isOneToOne: false
-            referencedRelation: "workout"
-            referencedColumns: ["id"]
+            foreignKeyName: "exercise_daily_snapshot_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       exercise_performance_index: {
         Row: {
-          best_set_e1rm_pr: number
-          best_set_e1rm_pr_date: string | null
-          created_at: string
-          exercise_id: number
-          id: number
-          rep_pr_dates: Json
-          rep_prs: Json
-          total_volume_pr: number
-          total_volume_pr_date: string | null
-          updated_at: string
-          user_id: string | null
-          workout_id: number
-        }
+          best_set_e1rm_pr: number;
+          best_set_e1rm_pr_date: string | null;
+          created_at: string;
+          exercise_id: number;
+          id: number;
+          rep_pr_dates: Json;
+          rep_prs: Json;
+          total_volume_pr: number;
+          total_volume_pr_date: string | null;
+          updated_at: string;
+          user_id: string | null;
+          workout_id: number;
+        };
         Insert: {
-          best_set_e1rm_pr?: number
-          best_set_e1rm_pr_date?: string | null
-          created_at?: string
-          exercise_id: number
-          id?: number
-          rep_pr_dates?: Json
-          rep_prs?: Json
-          total_volume_pr?: number
-          total_volume_pr_date?: string | null
-          updated_at?: string
-          user_id?: string | null
-          workout_id: number
-        }
+          best_set_e1rm_pr?: number;
+          best_set_e1rm_pr_date?: string | null;
+          created_at?: string;
+          exercise_id: number;
+          id?: number;
+          rep_pr_dates?: Json;
+          rep_prs?: Json;
+          total_volume_pr?: number;
+          total_volume_pr_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id: number;
+        };
         Update: {
-          best_set_e1rm_pr?: number
-          best_set_e1rm_pr_date?: string | null
-          created_at?: string
-          exercise_id?: number
-          id?: number
-          rep_pr_dates?: Json
-          rep_prs?: Json
-          total_volume_pr?: number
-          total_volume_pr_date?: string | null
-          updated_at?: string
-          user_id?: string | null
-          workout_id?: number
-        }
+          best_set_e1rm_pr?: number;
+          best_set_e1rm_pr_date?: string | null;
+          created_at?: string;
+          exercise_id?: number;
+          id?: number;
+          rep_pr_dates?: Json;
+          rep_prs?: Json;
+          total_volume_pr?: number;
+          total_volume_pr_date?: string | null;
+          updated_at?: string;
+          user_id?: string | null;
+          workout_id?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "exercise_performance_index_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: true
-            referencedRelation: "exercise"
-            referencedColumns: ["id"]
+            foreignKeyName: "exercise_performance_index_exercise_id_fkey";
+            columns: ["exercise_id"];
+            isOneToOne: true;
+            referencedRelation: "exercise";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "exercise_performance_index_workout_id_fkey"
-            columns: ["workout_id"]
-            isOneToOne: false
-            referencedRelation: "workout"
-            referencedColumns: ["id"]
+            foreignKeyName: "exercise_performance_index_workout_id_fkey";
+            columns: ["workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       gym_place: {
         Row: {
-          created_at: string
-          id: number
-          latitude: number
-          longitude: number
-          name: string
-          updated_at: string
-          user_id: string | null
-        }
+          created_at: string;
+          id: number;
+          latitude: number;
+          longitude: number;
+          name: string;
+          updated_at: string;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          id?: number
-          latitude: number
-          longitude: number
-          name: string
-          updated_at?: string
-          user_id?: string | null
-        }
+          created_at?: string;
+          id?: number;
+          latitude: number;
+          longitude: number;
+          name: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          id?: number
-          latitude?: number
-          longitude?: number
-          name?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: number;
+          latitude?: number;
+          longitude?: number;
+          name?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       workout: {
         Row: {
-          created_at: string
-          deleted_at: string | null
-          id: number
-          name: string
-          updated_at: string | null
-          user_id: string | null
-        }
+          activity_date: string | null;
+          created_at: string;
+          deleted_at: string | null;
+          id: number;
+          name: string;
+          template_workout_id: number | null;
+          updated_at: string | null;
+          user_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          id?: number
-          name: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
+          activity_date?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: number;
+          name: string;
+          template_workout_id?: number | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          deleted_at?: string | null
-          id?: number
-          name?: string
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-    }
+          activity_date?: string | null;
+          created_at?: string;
+          deleted_at?: string | null;
+          id?: number;
+          name?: string;
+          template_workout_id?: number | null;
+          updated_at?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "workout_template_workout_id_fkey";
+            columns: ["template_workout_id"];
+            isOneToOne: false;
+            referencedRelation: "workout";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  "public"
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
@@ -346,98 +363,98 @@ export type Tables<
         DefaultSchema["Views"])
     ? (DefaultSchema["Tables"] &
         DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const
+} as const;

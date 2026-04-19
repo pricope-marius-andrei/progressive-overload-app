@@ -14,7 +14,12 @@
  */
 
 import CustomTabBar from "@/components/utils/CustomTabBar";
-import { DashboardProvider, useAuth, WorkoutsListProvider } from "@/contexts";
+import {
+  DashboardProvider,
+  TodayActivityProvider,
+  useAuth,
+  WorkoutsListProvider,
+} from "@/contexts";
 import type { TabConfig } from "@/types/tab.types";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
@@ -67,22 +72,24 @@ export default function TabLayout() {
   return (
     <DashboardProvider>
       <WorkoutsListProvider>
-        <SafeAreaView className="flex-1" edges={["top"]}>
-          <Tabs
-            tabBar={(props) => (
-              <CustomTabBar
-                {...props}
-                tabConfig={tabConfig}
-                tabOrder={tabOrder}
-                activeColor="#6366f1"
-                inactiveColor="#9ca3af"
-              />
-            )}
-            screenOptions={{
-              headerShown: false,
-            }}
-          ></Tabs>
-        </SafeAreaView>
+        <TodayActivityProvider>
+          <SafeAreaView className="flex-1" edges={["top"]}>
+            <Tabs
+              tabBar={(props) => (
+                <CustomTabBar
+                  {...props}
+                  tabConfig={tabConfig}
+                  tabOrder={tabOrder}
+                  activeColor="#6366f1"
+                  inactiveColor="#9ca3af"
+                />
+              )}
+              screenOptions={{
+                headerShown: false,
+              }}
+            ></Tabs>
+          </SafeAreaView>
+        </TodayActivityProvider>
       </WorkoutsListProvider>
     </DashboardProvider>
   );
