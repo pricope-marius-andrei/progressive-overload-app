@@ -34,7 +34,7 @@ export class ErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <View className="flex-1 justify-center items-center p-8 bg-gray-50">
+        <View className="flex-1 justify-center items-center p-8">
           <Text className="text-xl font-bold text-gray-900 mb-3 text-center">
             Something went wrong
           </Text>

@@ -8,7 +8,7 @@ const RootIndex: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="small" color="#2563eb" />
       </View>
     );

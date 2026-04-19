@@ -1,3 +1,4 @@
+import { statusColors, type StatusType } from "@/utils/colors";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -13,26 +14,10 @@ function CalendarDay({
   day: Date;
   width: number;
   height: number;
-  status: "default" | "completed" | "freezed" | "selected";
+  status: StatusType;
   onPress?: () => void;
 }) {
-  const containerClassName =
-    status === "selected"
-      ? "border-[#3B3DC9] bg-[#4B4DD9] border-4"
-      : status === "completed"
-        ? "border-[#bbf7d0] bg-[#dcfce7]"
-        : status === "freezed"
-          ? "border-sky-100 bg-sky-50"
-          : "border-indigo-100 bg-white/80";
-
-  const textClassName =
-    status === "selected"
-      ? "text-[#E1E2F4]"
-      : status === "completed"
-        ? "text-[#166534]"
-        : status === "freezed"
-          ? "text-sky-700"
-          : "text-black";
+  const colors = statusColors[status];
 
   return (
     <Pressable
@@ -42,10 +27,15 @@ function CalendarDay({
     >
       <Text className="font-bold text-base">{DAY_LABELS[day.getDay()]}</Text>
       <View
-        style={{ width: width, height: height }}
-        className={`items-center justify-center rounded-full border ${containerClassName}`}
+        style={{
+          width: width,
+          height: height,
+          borderColor: colors.border,
+          backgroundColor: colors.bg,
+        }}
+        className="items-center justify-center rounded-full border-4"
       >
-        <Text className={`text-2xl font-black ${textClassName}`}>
+        <Text style={{ color: colors.text }} className="text-2xl font-black">
           {day.getDate()}
         </Text>
       </View>

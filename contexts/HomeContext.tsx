@@ -1,208 +1,41 @@
 /**
  * Home Context - Progressive Overload Gym App
  *
- * Provides state management for the home screen including workouts,
- * user data, and workout operations (add, delete, etc.)
+ * @deprecated Use DashboardProvider with useDashboard and WorkoutsListProvider with useWorkoutsList instead
+ *
+ * This context is kept for backward compatibility. It wraps DashboardProvider and WorkoutsListProvider
+ * to provide a unified provider for the home screen.
  */
 
-import { Workout } from "@/types/mappers/workout.mapper";
-import { getCurrentDeviceCoordinates } from "@/utils/location";
-import { Href, useRouter } from "expo-router";
-import React, {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { Alert } from "react-native";
-import {
-  createWorkout,
-  deleteWorkout,
-  fetchAndUpdateAppProgress,
-  fetchMyGyms,
-  fetchTrainingDateKeys,
-  fetchWorkouts,
-} from "./home/home.repository";
-import { HomeContextType, User } from "./home/home.types";
-
-const HomeContext = createContext<HomeContextType | undefined>(undefined);
+import React, { ReactNode } from "react";
+import { DashboardProvider, useDashboard } from "./DashboardContext";
+import { useWorkoutsList, WorkoutsListProvider } from "./WorkoutsListContext";
+import { HomeContextType } from "./home/home.types";
 
 interface HomeProviderProps {
   children: ReactNode;
 }
 
 export const HomeProvider: React.FC<HomeProviderProps> = ({ children }) => {
-  const router = useRouter();
-
-  const [user, setUser] = useState<User>({
-    username: "Athlete",
-    gymName: null,
-    dailyStreak: 0,
-    experienceScore: 0,
-  });
-
-  const [workoutsList, setWorkoutsList] = useState<Workout[]>([]);
-  const [trainingDateKeys, setTrainingDateKeys] = useState<string[]>([]);
-  const hasShownMissingGymListWarningRef = useRef(false);
-
-  const loadWorkouts = useCallback(async () => {
-    try {
-      const workouts = await fetchWorkouts();
-      setWorkoutsList(workouts);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error fetching workouts:", message);
-    }
-  }, []);
-
-  const refreshHomeState = useCallback(async () => {
-    let deviceLocation: { latitude: number; longitude: number } | null = null;
-
-    try {
-      deviceLocation = await getCurrentDeviceCoordinates();
-    } catch (error: unknown) {
-      console.error("Error loading device location:", error);
-    }
-
-    const [progressResult, trainingDatesResult, myGymsResult] =
-      await Promise.allSettled([
-        fetchAndUpdateAppProgress(deviceLocation),
-        fetchTrainingDateKeys(),
-        fetchMyGyms(),
-      ]);
-
-    if (progressResult.status === "fulfilled") {
-      const progress = progressResult.value;
-      setUser((prev) => ({
-        ...prev,
-        gymName: progress.currentGymName,
-        dailyStreak: progress.dailyStreak,
-        experienceScore: progress.experienceScore,
-      }));
-    } else {
-      const error = progressResult.reason;
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error refreshing app progress:", message);
-      setUser((prev) => ({ ...prev, gymName: null }));
-    }
-
-    if (trainingDatesResult.status === "fulfilled") {
-      setTrainingDateKeys(trainingDatesResult.value);
-    } else {
-      const error = trainingDatesResult.reason;
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error loading training dates:", message);
-      setTrainingDateKeys([]);
-    }
-
-    if (myGymsResult.status === "fulfilled") {
-      const hasAnySavedGyms = myGymsResult.value.length > 0;
-
-      if (!hasAnySavedGyms && !hasShownMissingGymListWarningRef.current) {
-        hasShownMissingGymListWarningRef.current = true;
-        Alert.alert(
-          "Gym List Required",
-          "The app will not work correctly if your My Gyms list is empty. Tap the map icon and add at least one gym.",
-        );
-      }
-
-      if (hasAnySavedGyms) {
-        hasShownMissingGymListWarningRef.current = false;
-      }
-    } else {
-      const error = myGymsResult.reason;
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error loading saved gyms:", message);
-    }
-
-    await loadWorkouts();
-  }, [loadWorkouts]);
-
-  useEffect(() => {
-    refreshHomeState();
-  }, [refreshHomeState]);
-
-  const handleSaveNewWorkout = useCallback(async (newWorkoutName: string) => {
-    const trimmedWorkoutName = newWorkoutName.trim();
-    if (!trimmedWorkoutName) {
-      return;
-    }
-
-    try {
-      const createdWorkout = await createWorkout(trimmedWorkoutName);
-      setWorkoutsList((prev) => [...prev, createdWorkout]);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Error creating workout:", message);
-      Alert.alert("Error", "Failed to create workout. Please try again.");
-    }
-  }, []);
-
-  const handleDeleteWorkout = useCallback(
-    async (workout: Workout) => {
-      const { id, name } = workout;
-
-      setWorkoutsList((prev) => prev.filter((item) => item.id !== id));
-
-      try {
-        await deleteWorkout(id);
-        console.log(`Workout "${name}" deleted successfully.`);
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("Error deleting workout:", message);
-        Alert.alert("Error", "Failed to delete workout. Please try again.");
-        await loadWorkouts();
-      }
-    },
-    [loadWorkouts],
+  return (
+    <DashboardProvider>
+      <WorkoutsListProvider>{children}</WorkoutsListProvider>
+    </DashboardProvider>
   );
-
-  const navigateToWorkout = useCallback(
-    (workout: Workout) => {
-      const workoutRoute: Href = {
-        pathname: "/workouts/[id]",
-        params: { id: String(workout.id) },
-      };
-
-      router.push(workoutRoute);
-    },
-    [router],
-  );
-
-  const value: HomeContextType = useMemo(
-    () => ({
-      refreshHomeState,
-      handleDeleteWorkout,
-      handleSaveNewWorkout,
-      navigateToWorkout,
-      user,
-      workoutsList,
-      trainingDateKeys,
-    }),
-    [
-      refreshHomeState,
-      handleDeleteWorkout,
-      handleSaveNewWorkout,
-      navigateToWorkout,
-      user,
-      workoutsList,
-      trainingDateKeys,
-    ],
-  );
-
-  return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
 };
 
+/**
+ * @deprecated Use useDashboard and useWorkoutsList instead
+ *
+ * Combines both DashboardContextType and WorkoutsListContextType for backward compatibility.
+ */
 export const useHome = (): HomeContextType => {
-  const context = useContext(HomeContext);
-  if (context === undefined) {
-    throw new Error("useHome must be used within a HomeProvider");
-  }
-  return context;
-};
+  const dashboard = useDashboard();
+  const workoutsList = useWorkoutsList();
 
-export default HomeContext;
+  return {
+    ...dashboard,
+    ...workoutsList,
+    refreshHomeState: dashboard.refreshDashboard,
+  } as HomeContextType;
+};

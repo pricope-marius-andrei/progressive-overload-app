@@ -4,20 +4,22 @@
  * Virtualized list of all user workouts with empty state
  */
 
+import { useWorkoutsList } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
 import React from "react";
 import {
-  FlatList,
-  ListRenderItemInfo,
-  RefreshControlProps,
-  Text,
-  View,
+    FlatList,
+    ListRenderItemInfo,
+    RefreshControlProps,
+    Text,
+    View,
 } from "react-native";
-import WorkoutItem from "./WorkoutItem";
+import WorkoutItem from "../home/WorkoutItem";
 
 interface WorkoutsListProps {
   ListHeaderComponent?: React.ComponentType | React.ReactElement;
   refreshControl?: React.ReactElement<RefreshControlProps>;
+  title?: string;
 }
 
 const renderWorkoutItem = ({ item }: ListRenderItemInfo<Workout>) => (
@@ -27,7 +29,7 @@ const renderWorkoutItem = ({ item }: ListRenderItemInfo<Workout>) => (
 const keyExtractor = (item: Workout) => String(item.id);
 
 const ListEmptyComponent = () => (
-  <View className="mt-2 items-center rounded-3xl border p-8">
+  <View className="mt-2 items-center rounded-3xl border border-white/70 bg-white/65 p-8">
     <Text className="mb-2 text-center text-lg font-semibold text-indigo-900">
       No workouts yet
     </Text>
@@ -40,14 +42,16 @@ const ListEmptyComponent = () => (
 const WorkoutsList: React.FC<WorkoutsListProps> = ({
   ListHeaderComponent,
   refreshControl,
+  title = "Workouts",
 }) => {
-  // const { workoutsList } = useHome();
+  const { workoutsList } = useWorkoutsList();
 
   return (
     <FlatList
-      data={[]} // workoutsList
+      data={workoutsList}
       renderItem={renderWorkoutItem}
       keyExtractor={keyExtractor}
+      className="bg-white p-7"
       ListHeaderComponent={
         <>
           {ListHeaderComponent &&
@@ -57,12 +61,10 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
               <ListHeaderComponent />
             ))}
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-2xl font-black text-indigo-950">
-              Today&apos;s Activity
-            </Text>
-            <View className="rounded-full border border-indigo-100 bg-white/70 px-3 py-1">
+            <Text className="text-2xl font-black text-indigo-950">{title}</Text>
+            <View className="rounded-full px-3 py-1">
               <Text className="text-sm font-semibold text-indigo-700">
-                0{/* {workoutsList.length} */}
+                {workoutsList.length}
               </Text>
             </View>
           </View>
@@ -70,12 +72,6 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
       }
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}
-      contentContainerStyle={{
-        flexGrow: 1,
-        paddingHorizontal: 20,
-        paddingTop: 16,
-        paddingBottom: 28,
-      }}
     />
   );
 };

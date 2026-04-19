@@ -10,5 +10,6 @@ export { default as ExerciseModal } from "./ExerciseModal";
 export { default as ExercisesList } from "./ExercisesList";
 export { default as WorkoutDatePicker } from "./WorkoutDatePicker";
 export { default as WorkoutHeader } from "./WorkoutHeader";
+export { default as WorkoutsList } from "./WorkoutsList";
 export { default as XpGainPopup } from "./XpGainPopup";
 

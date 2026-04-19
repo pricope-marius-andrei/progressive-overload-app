@@ -8,13 +8,7 @@
 export { AuthRequired } from "./auth";
 
 // Home screen components
-export {
-    AddWorkoutForm,
-    GymPickerModal,
-    Header,
-    WorkoutItem,
-    WorkoutsList
-} from "./home";
+export { AddWorkoutForm, GymPickerModal, Header, WorkoutItem } from "./home";
 
 export { TrainingCalendar } from "./training-calendar";
 
@@ -26,6 +20,7 @@ export {
     ExercisesList,
     WorkoutDatePicker,
     WorkoutHeader,
+    WorkoutsList,
     XpGainPopup
 } from "./workout";
 

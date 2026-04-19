@@ -3,7 +3,7 @@
  *
  * Displays welcome message and daily streak information
  */
-import { useHome } from "@/contexts";
+import { useDashboard } from "@/contexts";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
@@ -13,7 +13,7 @@ type HeaderProps = {
 };
 
 function Header({ onOpenGymPicker }: HeaderProps) {
-  const { user } = useHome();
+  const { user } = useDashboard();
   const streak = user.dailyStreak;
   const gymLabel = user.gymName ?? "No Gym Selected";
 

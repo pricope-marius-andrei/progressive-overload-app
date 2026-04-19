@@ -1,4 +1,4 @@
-import { useHome } from "@/contexts";
+import { useDashboard } from "@/contexts";
 import { useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { FlatList, LayoutChangeEvent, Text, View } from "react-native";
@@ -24,7 +24,7 @@ const toDateKey = (date: Date): string => {
 };
 
 function TrainingCalendar() {
-  const { trainingDateKeys } = useHome();
+  const { trainingDateKeys } = useDashboard();
   const flatListRef = useRef<FlatList<number>>(null);
   const [calendarWidth, setCalendarWidth] = useState(0);
   const [today, setToday] = useState(() => getStartOfToday());
@@ -111,7 +111,7 @@ function TrainingCalendar() {
           style={{ width: calendarWidth || undefined }}
         >
           <View
-            className="flex-row-reverse items-center"
+            className="flex-row-reverse items-center justify-center"
             style={{
               gap: DAY_GAP,
               minWidth: visibleDays * (DAY_ITEM_WIDTH + DAY_GAP),

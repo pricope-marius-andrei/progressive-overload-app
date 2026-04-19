@@ -4,7 +4,7 @@
  * Individual workout item with navigation and delete functionality
  */
 
-import { useHome } from "@/contexts";
+import { useWorkoutsList } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
@@ -15,7 +15,7 @@ interface WorkoutItemProps {
 }
 
 const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
-  const { navigateToWorkout, handleDeleteWorkout } = useHome();
+  const { navigateToWorkout, handleDeleteWorkout } = useWorkoutsList();
 
   const handleConfirmDeleteWorkout = () => {
     Alert.alert(

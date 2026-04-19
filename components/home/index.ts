@@ -8,5 +8,4 @@ export { default as AddWorkoutForm } from "./AddWorkoutForm";
 export { default as GymPickerModal } from "./GymPickerModal";
 export { default as Header } from "./Header";
 export { default as WorkoutItem } from "./WorkoutItem";
-export { default as WorkoutsList } from "./WorkoutsList";
 

@@ -7,12 +7,22 @@ export interface User {
   experienceScore: number;
 }
 
-export interface HomeContextType {
+export interface DashboardContextType {
   user: User;
-  workoutsList: Workout[];
   trainingDateKeys: string[];
-  refreshHomeState: () => Promise<void>;
+  refreshDashboard: () => Promise<void>;
+}
+
+export interface WorkoutsListContextType {
+  workoutsList: Workout[];
+  refreshWorkoutsList: () => Promise<void>;
   handleSaveNewWorkout: (workoutName: string) => Promise<void>;
   handleDeleteWorkout: (workout: Workout) => Promise<void>;
   navigateToWorkout: (workout: Workout) => void;
 }
+
+/**
+ * @deprecated Use DashboardContextType and WorkoutsListContextType instead
+ */
+export interface HomeContextType
+  extends DashboardContextType, WorkoutsListContextType {}

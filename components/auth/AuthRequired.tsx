@@ -15,8 +15,8 @@ const AuthRequired: React.FC<AuthRequiredProps> = ({
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50 px-6">
-        <View className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 items-center">
+      <View className="flex-1 items-center justify-center px-6">
+        <View className="w-full max-w-md rounded-2xl border p-6 items-center">
           <ActivityIndicator size="small" color="#2563eb" />
           <Text className="mt-3 text-sm text-gray-600">
             Restoring session...
@@ -27,8 +27,8 @@ const AuthRequired: React.FC<AuthRequiredProps> = ({
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50 px-6">
-      <View className="w-full max-w-md rounded-3xl border border-blue-200 bg-white p-6 shadow-sm">
+    <View className="flex-1 items-center justify-center px-6">
+      <View className="w-full max-w-md rounded-3xl p-6 shadow-sm">
         <View className="self-start rounded-full bg-blue-100 px-3 py-1 mb-4">
           <Text className="text-xs font-semibold uppercase tracking-wide text-blue-800">
             Authentication

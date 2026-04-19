@@ -1,11 +1,29 @@
-import React from "react";
-import { Text, View } from "react-native";
+import { AddWorkoutForm, WorkoutsList } from "@/components";
+import { useWorkoutsList } from "@/contexts";
+import React, { useCallback, useState } from "react";
+import { RefreshControl } from "react-native";
 
 function Workouts() {
+  const { refreshWorkoutsList } = useWorkoutsList();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshWorkoutsList();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshWorkoutsList]);
+
   return (
-    <View className="flex-1 items-center justify-center bg-gray-50">
-      <Text className="text-lg font-bold text-gray-900">Workouts Screen</Text>
-    </View>
+    <WorkoutsList
+      title="Workouts"
+      ListHeaderComponent={<AddWorkoutForm />}
+      refreshControl={
+        <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+      }
+    />
   );
 }
 

@@ -7,13 +7,14 @@
  *
  * Features:
  * - Home tab: Main dashboard for gym progress tracking
+ * - Workouts tab: Workouts list and management
  * - Profile tab: User information and fitness goals
  * - Dynamic icons that change based on focus state (filled vs outline)
  * - Indigo color theme for active tabs
  */
 
 import CustomTabBar from "@/components/utils/CustomTabBar";
-import { useAuth } from "@/contexts";
+import { DashboardProvider, useAuth, WorkoutsListProvider } from "@/contexts";
 import type { TabConfig } from "@/types/tab.types";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
@@ -22,6 +23,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 /**
  * Main tab layout component that renders the bottom tab navigation
  * Wrapped with SafeArea to ensure proper spacing on all devices
+ * Wrapped with Dashboard and WorkoutsList providers for state management
  * @returns JSX.Element - The tab navigation component with SafeArea support
  */
 export default function TabLayout() {
@@ -52,7 +54,7 @@ export default function TabLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
+      <View className="flex-1 items-center justify-center">
         <ActivityIndicator size="small" color="#2563eb" />
       </View>
     );
@@ -63,21 +65,25 @@ export default function TabLayout() {
   }
 
   return (
-    <SafeAreaView className="flex-1" edges={["top"]}>
-      <Tabs
-        tabBar={(props) => (
-          <CustomTabBar
-            {...props}
-            tabConfig={tabConfig}
-            tabOrder={tabOrder}
-            activeColor="#6366f1"
-            inactiveColor="#9ca3af"
-          />
-        )}
-        screenOptions={{
-          headerShown: false,
-        }}
-      ></Tabs>
-    </SafeAreaView>
+    <DashboardProvider>
+      <WorkoutsListProvider>
+        <SafeAreaView className="flex-1" edges={["top"]}>
+          <Tabs
+            tabBar={(props) => (
+              <CustomTabBar
+                {...props}
+                tabConfig={tabConfig}
+                tabOrder={tabOrder}
+                activeColor="#6366f1"
+                inactiveColor="#9ca3af"
+              />
+            )}
+            screenOptions={{
+              headerShown: false,
+            }}
+          ></Tabs>
+        </SafeAreaView>
+      </WorkoutsListProvider>
+    </DashboardProvider>
   );
 }

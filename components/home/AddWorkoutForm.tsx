@@ -4,13 +4,13 @@
  * Form for adding new workouts with input field and add button
  */
 
-import { useHome } from "@/contexts";
+import { useWorkoutsList } from "@/contexts";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React, { useCallback, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 const AddWorkoutForm: React.FC = () => {
-  const { handleSaveNewWorkout } = useHome();
+  const { handleSaveNewWorkout } = useWorkoutsList();
 
   const [newWorkoutName, setNewWorkoutName] = useState("");
   const isDisabled = !newWorkoutName.trim();
@@ -25,19 +25,14 @@ const AddWorkoutForm: React.FC = () => {
   }, [newWorkoutName, handleSaveNewWorkout]);
 
   return (
-    <View className="rounded-3xl border border-white/70 bg-white/65 p-4">
-      <Text className="mb-1 text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
-        New Session
-      </Text>
-      <Text className="mb-3 text-base font-semibold text-indigo-950">
-        Create workout
-      </Text>
+    <View className="mb-5 gap-3">
+      <Text className="text-2xl font-black">Create workout</Text>
 
       <View className="flex-row items-center gap-3">
         <TextInput
-          className="flex-1 rounded-xl border border-indigo-100 bg-white/80 px-4 py-3 text-indigo-950"
+          className="flex-1 rounded-xl border border-indigo-100 px-4 py-3 text-black"
           placeholder="e.g. Push Day"
-          placeholderTextColor="#6366F1"
+          placeholderTextColor="gray"
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"
@@ -45,17 +40,17 @@ const AddWorkoutForm: React.FC = () => {
         />
 
         <Pressable
-          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-indigo-300" : "bg-indigo-500"}`}
+          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-status-default-bg border border-status-default-border" : "bg-status-selected-bg border-2 border-status-selected-border"}`}
           disabled={isDisabled}
           onPress={handleSubmit}
         >
-          <AntDesign name="plus" size={16} color="white" />
+          <AntDesign
+            name="plus"
+            size={16}
+            color={isDisabled ? "gray" : "white"}
+          />
         </Pressable>
       </View>
-
-      <Text className="mt-2 text-xs text-indigo-700">
-        Add a workout, then tap it below to start logging exercises.
-      </Text>
     </View>
   );
 };
