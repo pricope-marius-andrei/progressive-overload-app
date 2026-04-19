@@ -1,12 +1,36 @@
+import type { TabConfig } from "@/types/tab.types";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Pressable, Text, View } from "react-native";
+
+interface CustomTabBarProps extends BottomTabBarProps {
+  tabConfig?: TabConfig;
+  tabOrder?: string[];
+  activeColor?: string;
+  inactiveColor?: string;
+}
+
+const DEFAULT_ACTIVE_COLOR = "#6366f1";
+const DEFAULT_INACTIVE_COLOR = "#9ca3af";
 
 export default function CustomTabBar({
   state,
   descriptors,
   navigation,
-}: BottomTabBarProps) {
+  tabConfig = {},
+  tabOrder,
+  activeColor = DEFAULT_ACTIVE_COLOR,
+  inactiveColor = DEFAULT_INACTIVE_COLOR,
+}: CustomTabBarProps) {
+  // Sort routes by tabOrder if provided
+  const sortedRoutes = tabOrder
+    ? state.routes.sort(
+        (a: { name: string }, b: { name: string }) =>
+          (tabOrder.indexOf(a.name) ?? Infinity) -
+          (tabOrder.indexOf(b.name) ?? Infinity),
+      )
+    : state.routes;
+
   return (
     <View
       style={{
@@ -14,7 +38,7 @@ export default function CustomTabBar({
         bottom: 20,
         left: 0,
         right: 0,
-        alignItems: "center", // 👈 centers horizontally
+        alignItems: "center",
       }}
     >
       <View
@@ -25,16 +49,20 @@ export default function CustomTabBar({
           height: 60,
           paddingHorizontal: 20,
           alignItems: "center",
-          elevation: 5, // Android shadow
-          shadowColor: "#000", // iOS shadow
+          elevation: 5,
+          shadowColor: "#000",
           shadowOpacity: 0.1,
           shadowRadius: 10,
         }}
       >
-        {state.routes.map(
+        {sortedRoutes.map(
           (route: { key: string; name: string }, index: number) => {
             const { options } = descriptors[route.key];
-            const isFocused = state.index === index;
+            const isFocused =
+              state.index ===
+              state.routes.findIndex(
+                (r: { key: string }) => r.key === route.key,
+              );
 
             const onPress = () => {
               const event = navigation.emit({
@@ -48,14 +76,10 @@ export default function CustomTabBar({
               }
             };
 
-            const iconName =
-              route.name === "Home"
-                ? isFocused
-                  ? "home"
-                  : "home-outline"
-                : isFocused
-                  ? "person"
-                  : "person-outline";
+            const routeConfig = tabConfig[route.name];
+            const iconName = isFocused
+              ? routeConfig?.focused || route.name.toLowerCase()
+              : routeConfig?.unfocused || `${route.name.toLowerCase()}-outline`;
 
             return (
               <Pressable
@@ -64,19 +88,19 @@ export default function CustomTabBar({
                 style={{
                   alignItems: "center",
                   justifyContent: "center",
-                  marginHorizontal: 20, // 👈 spacing between tabs
+                  marginHorizontal: 20,
                 }}
               >
                 <Ionicons
-                  name={iconName}
+                  name={iconName as any}
                   size={24}
-                  color={isFocused ? "#6366f1" : "#9ca3af"}
+                  color={isFocused ? activeColor : inactiveColor}
                 />
                 <Text
                   className="font-black"
                   style={{
                     fontSize: 12,
-                    color: isFocused ? "#6366f1" : "#9ca3af",
+                    color: isFocused ? activeColor : inactiveColor,
                   }}
                 >
                   {options.title ?? route.name}

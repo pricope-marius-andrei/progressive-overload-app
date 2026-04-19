@@ -14,6 +14,7 @@
 
 import CustomTabBar from "@/components/utils/CustomTabBar";
 import { useAuth } from "@/contexts";
+import type { TabConfig } from "@/types/tab.types";
 import { Redirect, Tabs } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +26,29 @@ import { SafeAreaView } from "react-native-safe-area-context";
  */
 export default function TabLayout() {
   const { isAuthenticated, isLoading } = useAuth();
+
+  // Define tab configuration here - easy to extend by adding new entries
+  // Each tab specifies its focused and unfocused icon names from Ionicons
+  const tabConfig: TabConfig = {
+    Home: {
+      name: "Home",
+      focused: "home",
+      unfocused: "home-outline",
+    },
+    Workouts: {
+      name: "Workouts",
+      focused: "barbell",
+      unfocused: "barbell-outline",
+    },
+    Profile: {
+      name: "Profile",
+      focused: "person",
+      unfocused: "person-outline",
+    },
+  };
+
+  // Control the order of tabs - arrange them as you prefer
+  const tabOrder = ["Home", "Workouts", "Profile"];
 
   if (isLoading) {
     return (
@@ -41,7 +65,15 @@ export default function TabLayout() {
   return (
     <SafeAreaView className="flex-1" edges={["top"]}>
       <Tabs
-        tabBar={(props) => <CustomTabBar {...props} />}
+        tabBar={(props) => (
+          <CustomTabBar
+            {...props}
+            tabConfig={tabConfig}
+            tabOrder={tabOrder}
+            activeColor="#6366f1"
+            inactiveColor="#9ca3af"
+          />
+        )}
         screenOptions={{
           headerShown: false,
         }}
