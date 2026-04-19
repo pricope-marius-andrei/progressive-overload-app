@@ -30,9 +30,9 @@ const AddWorkoutForm: React.FC = () => {
 
       <View className="flex-row items-center gap-3">
         <TextInput
-          className="flex-1 rounded-xl border border-indigo-100 px-4 py-3 text-black"
+          className="flex-1 rounded-xl border-4 border-status-selected-border bg-status-selected-text focus:bg-status-selected-bg text-[#9ca3af] px-5 py-3"
           placeholder="e.g. Push Day"
-          placeholderTextColor="gray"
+          placeholderTextColor="#9ca3af"
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"
@@ -40,7 +40,7 @@ const AddWorkoutForm: React.FC = () => {
         />
 
         <Pressable
-          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-status-default-bg border border-status-default-border" : "bg-status-selected-bg border-2 border-status-selected-border"}`}
+          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-status-default-bg border-4 border-status-default-border" : "bg-status-selected-bg border-4 border-status-selected-border"}`}
           disabled={isDisabled}
           onPress={handleSubmit}
         >

@@ -8,13 +8,23 @@ import { useWorkoutsList } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import React from "react";
-import { Alert, Pressable, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 
 interface WorkoutItemProps {
   workout: Workout;
+  isDeleteMode: boolean;
+  hasAnyDeleteModeActive: boolean;
+  onEnterDeleteMode: () => void;
+  onExitDeleteMode: () => void;
 }
 
-const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
+function WorkoutItem({
+  workout,
+  isDeleteMode,
+  hasAnyDeleteModeActive,
+  onEnterDeleteMode,
+  onExitDeleteMode,
+}: WorkoutItemProps) {
   const { navigateToWorkout, handleDeleteWorkout } = useWorkoutsList();
 
   const handleConfirmDeleteWorkout = () => {
@@ -36,46 +46,74 @@ const WorkoutItem: React.FC<WorkoutItemProps> = ({ workout }) => {
   };
 
   return (
-    <View className="mb-3 rounded-3xl border border-white/70 bg-white/65 p-4">
-      <View className="mb-2 flex-row items-center justify-between">
-        <View className="rounded-full border border-indigo-100 bg-indigo-50/80 px-2.5 py-1">
-          <Text className="text-[10px] font-semibold uppercase tracking-[1px] text-indigo-600">
-            Workout
-          </Text>
-        </View>
+    <Pressable
+      onLongPress={onEnterDeleteMode}
+      delayLongPress={250}
+      onPress={() => {
+        if (hasAnyDeleteModeActive && !isDeleteMode) {
+          onExitDeleteMode();
+          return;
+        }
 
-        <TouchableOpacity
-          className="ml-3 rounded-xl border border-indigo-100 bg-indigo-50/80 p-2"
-          onPress={handleConfirmDeleteWorkout}
-          accessibilityRole="button"
-          accessibilityLabel={`Delete workout ${workout.name}`}
-        >
-          <AntDesign name="delete" size={18} color="#4F46E5" />
-        </TouchableOpacity>
-      </View>
+        if (isDeleteMode) {
+          onExitDeleteMode();
+          return;
+        }
+
+        navigateToWorkout(workout);
+      }}
+      className={`relative mb-3 rounded-2xl border-solid border-4 p-4 ${
+        isDeleteMode
+          ? "border-dashed border-red-500 bg-red-100"
+          : "border-status-selected-border bg-status-selected-bg"
+      }`}
+      accessibilityRole="button"
+      accessibilityLabel={`Open workout ${workout.name}`}
+      accessibilityHint={
+        isDeleteMode
+          ? "Delete mode enabled. Tap bin to delete or tap card to exit delete mode."
+          : "Tap to open workout. Long press to enable delete mode."
+      }
+    >
+      {isDeleteMode ? (
+        <View className="absolute top-0 right-0 p-5">
+          <Pressable
+            className="rounded-xl bg-red-200 p-2"
+            onPress={handleConfirmDeleteWorkout}
+            accessibilityRole="button"
+            accessibilityLabel={`Delete workout ${workout.name}`}
+          >
+            <AntDesign name="delete" size={18} color="#B91C1C" />
+          </Pressable>
+        </View>
+      ) : null}
 
       <View className="flex-row items-center justify-between">
-        <Pressable
-          onPress={() => navigateToWorkout(workout)}
-          className="flex-1 flex-row items-center"
-          accessibilityRole="button"
-          accessibilityLabel={`Open workout ${workout.name}`}
-        >
-          <View className="mr-3 h-10 w-10 items-center justify-center rounded-full border border-indigo-200 bg-indigo-500">
-            <AntDesign name="caret-right" size={12} color="#FFFFFF" />
-          </View>
-          <View className="flex-1">
-            <Text className="text-base font-semibold text-indigo-950">
-              {workout.name}
-            </Text>
-            <Text className="text-sm text-indigo-700">
-              Tap to open and log sets
-            </Text>
-          </View>
-        </Pressable>
+        <View className="flex-1 px-10">
+          <Text
+            className={`text-2xl font-black ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+          >
+            {workout.name}
+          </Text>
+          <Text
+            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+          >
+            Number of exercises: {workout.exercises.length}
+          </Text>
+          <Text
+            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+          >
+            Last time worked out: {"Never"}
+          </Text>
+          <Text
+            className={`text-xl ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+          >
+            {isDeleteMode ? "Delete mode active" : "Tap to open and log sets"}
+          </Text>
+        </View>
       </View>
-    </View>
+    </Pressable>
   );
-};
+}
 
 export default WorkoutItem;

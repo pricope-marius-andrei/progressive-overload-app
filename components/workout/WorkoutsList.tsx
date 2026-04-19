@@ -6,14 +6,8 @@
 
 import { useWorkoutsList } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
-import React from "react";
-import {
-    FlatList,
-    ListRenderItemInfo,
-    RefreshControlProps,
-    Text,
-    View,
-} from "react-native";
+import React, { useCallback, useState } from "react";
+import { FlatList, RefreshControlProps, Text, View } from "react-native";
 import WorkoutItem from "../home/WorkoutItem";
 
 interface WorkoutsListProps {
@@ -21,10 +15,6 @@ interface WorkoutsListProps {
   refreshControl?: React.ReactElement<RefreshControlProps>;
   title?: string;
 }
-
-const renderWorkoutItem = ({ item }: ListRenderItemInfo<Workout>) => (
-  <WorkoutItem workout={item} />
-);
 
 const keyExtractor = (item: Workout) => String(item.id);
 
@@ -45,6 +35,22 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
   title = "Workouts",
 }) => {
   const { workoutsList } = useWorkoutsList();
+  const [activeDeleteWorkoutId, setActiveDeleteWorkoutId] = useState<
+    number | null
+  >(null);
+
+  const renderWorkoutItem = useCallback(
+    ({ item }: { item: Workout }) => (
+      <WorkoutItem
+        workout={item}
+        isDeleteMode={activeDeleteWorkoutId === item.id}
+        hasAnyDeleteModeActive={activeDeleteWorkoutId !== null}
+        onEnterDeleteMode={() => setActiveDeleteWorkoutId(item.id)}
+        onExitDeleteMode={() => setActiveDeleteWorkoutId(null)}
+      />
+    ),
+    [activeDeleteWorkoutId],
+  );
 
   return (
     <FlatList
@@ -72,6 +78,11 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
       }
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}
+      onScrollBeginDrag={() => {
+        if (activeDeleteWorkoutId !== null) {
+          setActiveDeleteWorkoutId(null);
+        }
+      }}
     />
   );
 };
