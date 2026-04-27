@@ -576,7 +576,10 @@ export async function detectCurrentGymName(
 
 export async function fetchWorkouts(): Promise<Workout[]> {
   const supportsActivitySchema = await hasWorkoutActivitySchema();
-  const baseQuery = supabase.from("workout").select().is("deleted_at", null);
+  const baseQuery = supabase
+    .from("workout")
+    .select("*, exercise(id, deleted_at)")
+    .is("deleted_at", null);
   const { data, error } = supportsActivitySchema
     ? await baseQuery.is("activity_date", null)
     : await baseQuery;
@@ -598,7 +601,7 @@ export async function fetchTodayActivityWorkouts(
 
   const { data, error } = await supabase
     .from("workout")
-    .select()
+    .select("*, exercise(id, deleted_at)")
     .eq("activity_date", dateKey)
     .is("deleted_at", null);
 
@@ -631,7 +634,7 @@ export async function addTemplateWorkoutToTodayActivity(
   if (existingDailyWorkout) {
     const { data, error } = await supabase
       .from("workout")
-      .select()
+      .select("*, exercise(id, deleted_at)")
       .eq("id", existingDailyWorkout.id)
       .single();
 
@@ -662,7 +665,7 @@ export async function addTemplateWorkoutToTodayActivity(
         activity_date: dateKey,
         template_workout_id: templateWorkout.id,
       })
-      .select()
+      .select("*, exercise(id, deleted_at)")
       .single();
 
   if (createDailyWorkoutError) {

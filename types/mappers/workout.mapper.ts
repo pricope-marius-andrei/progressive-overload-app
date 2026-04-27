@@ -1,16 +1,29 @@
 import { ExerciseRow, ExerciseSetRow, WorkoutRow } from "@/types/entities";
 
+type WorkoutRowWithExercises = WorkoutRow & {
+  exercise?: { id: number; deleted_at?: string | null }[];
+};
+
 export interface Workout {
   id: number;
   name: string;
   exercises: Exercise[];
 }
 
-export function toWorkout(workoutRow: WorkoutRow): Workout {
+export function toWorkout(workoutRow: WorkoutRowWithExercises): Workout {
+  const exerciseCount = (workoutRow.exercise ?? []).filter(
+    (exercise) => !exercise.deleted_at,
+  ).length;
+
   return {
     id: workoutRow.id,
     name: workoutRow.name ?? "Unnamed Workout",
-    exercises: [], // Placeholder, as exercises would need to be fetched separately
+    // For list cards we only need count; create lightweight placeholders.
+    exercises: Array.from({ length: exerciseCount }, (_, index) => ({
+      id: index,
+      name: "",
+      sets: [],
+    })),
   };
 }
 

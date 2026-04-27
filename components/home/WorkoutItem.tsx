@@ -73,10 +73,10 @@ function WorkoutItem({
 
         openWorkout(workout);
       }}
-      className={`relative mb-3 rounded-2xl border-solid border-4 p-4 ${
+      className={`relative mb-3 rounded-2xl px-10 py-4 ${
         isDeleteMode
-          ? "border-dashed border-red-500 bg-red-100"
-          : "border-status-selected-border bg-status-selected-bg"
+          ? "border-dashed border-4 border-red-500 bg-red-100 shadow-lg shadow-red-500"
+          : "bg-white border-4 border-solid border-status-selected-text shadow-lg shadow-status-selected-border"
       }`}
       accessibilityRole="button"
       accessibilityLabel={`Open workout ${workout.name}`}
@@ -89,7 +89,7 @@ function WorkoutItem({
       {isDeleteMode ? (
         <View className="absolute top-0 right-0 p-5">
           <Pressable
-            className="rounded-xl bg-red-200 p-2"
+            className="rounded-2xl bg-red-200 p-2"
             onPress={handleConfirmDeleteWorkout}
             accessibilityRole="button"
             accessibilityLabel={`Delete workout ${workout.name}`}
@@ -100,24 +100,24 @@ function WorkoutItem({
       ) : null}
 
       <View className="flex-row items-center justify-between">
-        <View className="flex-1 px-10">
+        <View className="flex-1">
           <Text
-            className={`text-2xl font-black ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+            className={`text-2xl font-black ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
           >
             {workout.name}
           </Text>
           <Text
-            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
           >
             Number of exercises: {workout.exercises.length}
           </Text>
           <Text
-            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
           >
             Last time worked out: {"Never"}
           </Text>
           <Text
-            className={`text-xl ${isDeleteMode ? "text-red-700" : "text-status-selected-text"}`}
+            className={`text-xl ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
           >
             {isDeleteMode
               ? "Delete mode active"

@@ -15,6 +15,8 @@ import {
   useTodayActivity,
   useWorkoutsList,
 } from "@/contexts";
+import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { Redirect } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -56,8 +58,9 @@ function HomeContent() {
     navigateToTodayWorkout,
   } = useTodayActivity();
   const [isGymPickerVisible, setIsGymPickerVisible] = useState(false);
-  const [isTemplateSelectorVisible, setIsTemplateSelectorVisible] =
-    useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null,
+  );
   const [activeDeleteWorkoutId, setActiveDeleteWorkoutId] = useState<
     number | null
   >(null);
@@ -67,13 +70,15 @@ function HomeContent() {
       (workout) => workout.id === templateWorkoutId,
     );
 
-    if (!selectedTemplate) {
-      return;
-    }
-
-    await addTemplateToTodayActivity(selectedTemplate);
+    // Keep add flow stable even if template list is temporarily stale/reloading.
+    await addTemplateToTodayActivity(
+      selectedTemplate ?? {
+        id: templateWorkoutId,
+        name: "Workout Template",
+        exercises: [],
+      },
+    );
     await refreshDashboard();
-    setIsTemplateSelectorVisible(false);
   };
 
   const handleRemoveTodayWorkout = async (
@@ -83,98 +88,112 @@ function HomeContent() {
     await refreshDashboard();
   };
 
+  const handleAddSelectedTemplate = async () => {
+    if (selectedTemplateId === null) {
+      return;
+    }
+
+    await handleAddTemplateToToday(selectedTemplateId);
+  };
+
   return (
-    <View className="p-5 relative flex-1 bg-white">
-      <View className="flex-1" style={{ zIndex: 1 }}>
-        <GymPickerModal
-          visible={isGymPickerVisible}
-          onClose={() => setIsGymPickerVisible(false)}
-          onSaved={refreshDashboard}
-        />
+    <ScrollView
+      className="flex-1 p-6 relative bg-white"
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
+    >
+      <GymPickerModal
+        visible={isGymPickerVisible}
+        onClose={() => setIsGymPickerVisible(false)}
+        onSaved={refreshDashboard}
+      />
+      <HomeHeader onOpenGymPicker={() => setIsGymPickerVisible(true)} />
 
-        <ScrollView className="flex-1">
-          <HomeHeader onOpenGymPicker={() => setIsGymPickerVisible(true)} />
+      <View className="flex justify-center items-center gap-5">
+        <View className="flex-1 flex-row items-center justify-center gap-3">
+          <Text className="text-2xl font-black text-indigo-950">
+            {getTodayDateKey(new Date()) === selectedActivityDateKey
+              ? "Today's Activity"
+              : `Activity - ${selectedActivityDateKey}`}
+          </Text>
 
-          <View className="rounded-3xl border border-white/70 bg-white/65 p-4">
-            <View className="mb-2 flex-row items-center justify-between">
-              <Text className="text-2xl font-black text-indigo-950">
-                {getTodayDateKey(new Date()) === selectedActivityDateKey
-                  ? "Today's Activity"
-                  : `Activity - ${selectedActivityDateKey}`}
-              </Text>
-              <View className="rounded-full bg-indigo-50 px-3 py-1">
-                <Text className="text-sm font-semibold text-indigo-700">
-                  {todaysWorkouts.length}
-                </Text>
-              </View>
-            </View>
-
-            <Pressable
-              className="mb-3 mt-1 rounded-xl bg-indigo-500 px-4 py-3 items-center"
-              onPress={() =>
-                setIsTemplateSelectorVisible((previous) => !previous)
-              }
-            >
-              <Text className="font-semibold text-white">
-                {isTemplateSelectorVisible
-                  ? "Hide Templates"
-                  : "Add Workout From Templates"}
-              </Text>
-            </Pressable>
-
-            {isTemplateSelectorVisible ? (
-              <View className="mb-3 gap-2 rounded-2xl border border-indigo-100 bg-white/80 p-3">
-                {workoutTemplates.length === 0 ? (
-                  <Text className="text-sm text-indigo-700">
-                    No workout templates available. Create templates in Workouts
-                    tab.
-                  </Text>
-                ) : (
-                  workoutTemplates.map((templateWorkout) => (
-                    <Pressable
-                      key={templateWorkout.id}
-                      className="rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2"
-                      onPress={() => {
-                        void handleAddTemplateToToday(templateWorkout.id);
-                      }}
-                    >
-                      <Text className="text-sm font-semibold text-indigo-800">
-                        + {templateWorkout.name}
-                      </Text>
-                    </Pressable>
-                  ))
-                )}
-              </View>
-            ) : null}
-
-            <View className="gap-2">
-              {todaysWorkouts.length === 0 ? (
-                <Text className="text-sm text-indigo-700">
-                  No workouts in today&apos;s activity yet. Add one from
-                  templates.
-                </Text>
-              ) : (
-                todaysWorkouts.map((workout) => (
-                  <WorkoutItem
-                    key={workout.id}
-                    workout={workout}
-                    isDeleteMode={activeDeleteWorkoutId === workout.id}
-                    hasAnyDeleteModeActive={activeDeleteWorkoutId !== null}
-                    onEnterDeleteMode={() =>
-                      setActiveDeleteWorkoutId(workout.id)
-                    }
-                    onExitDeleteMode={() => setActiveDeleteWorkoutId(null)}
-                    onOpenWorkout={navigateToTodayWorkout}
-                    onDeleteWorkout={handleRemoveTodayWorkout}
-                    subtitle="Tap to open today's workout"
-                  />
-                ))
-              )}
-            </View>
+          <View className="rounded-full bg-indigo-50 px-3 py-1">
+            <Text className="text-sm font-semibold text-indigo-700">
+              {todaysWorkouts.length}
+            </Text>
           </View>
-        </ScrollView>
+        </View>
+
+        <View className="h-32 w-full gap-2 rounded-2xl border-4 border-dashed border-status-selected-text p-6 flexjustify-center">
+          <Text className="w-full text-xs font-black uppercase tracking-[1px] text-indigo-500">
+            Select from your workout templates
+          </Text>
+
+          {workoutTemplates.length === 0 ? (
+            <Text className="text-sm text-indigo-700">
+              No workout templates available. Create templates in Workouts tab.
+            </Text>
+          ) : (
+            <View className="flex-1 flex-row items-center gap-3">
+              <View className="flex-1 border border-status-selected-text rounded-xl h-12 justify-center">
+                <Picker
+                  selectedValue={selectedTemplateId ?? ""}
+                  onValueChange={(value) => {
+                    if (typeof value === "number") {
+                      setSelectedTemplateId(value);
+                      return;
+                    }
+                    setSelectedTemplateId(null);
+                  }}
+                  mode="dropdown"
+                >
+                  {workoutTemplates.map((templateWorkout) => (
+                    <Picker.Item
+                      key={templateWorkout.id}
+                      label={templateWorkout.name}
+                      value={templateWorkout.id}
+                    />
+                  ))}
+                </Picker>
+              </View>
+
+              <Pressable
+                className="items-center rounded-full p-3 bg-status-selected-bg border-2 border-status-selected-border"
+                onPress={() => {
+                  void handleAddSelectedTemplate();
+                }}
+              >
+                <Text className="m-auto font-semibold">
+                  <Ionicons name="add" size={16} color="white" />
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        <View className="flex flex-1 w-full gap-3 justify-center">
+          {todaysWorkouts.length === 0 ? (
+            <Text className="text-sm text-indigo-700 text-center">
+              No workouts in today&apos;s activity yet. Add one from templates.
+            </Text>
+          ) : (
+            todaysWorkouts.map((workout) => (
+              <WorkoutItem
+                key={workout.id}
+                workout={workout}
+                isDeleteMode={activeDeleteWorkoutId === workout.id}
+                hasAnyDeleteModeActive={activeDeleteWorkoutId !== null}
+                onEnterDeleteMode={() => setActiveDeleteWorkoutId(workout.id)}
+                onExitDeleteMode={() => setActiveDeleteWorkoutId(null)}
+                onOpenWorkout={navigateToTodayWorkout}
+                onDeleteWorkout={handleRemoveTodayWorkout}
+                subtitle="Tap to open today's workout"
+              />
+            ))
+          )}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
