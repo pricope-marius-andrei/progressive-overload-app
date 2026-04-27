@@ -30,9 +30,9 @@ const AddWorkoutForm: React.FC = () => {
 
       <View className="flex-row items-center gap-3">
         <TextInput
-          className="flex-1 rounded-xl border-4 border-status-selected-border bg-status-selected-text focus:bg-status-selected-bg text-[#9ca3af] px-5 py-3"
+          className="flex-1 rounded-xl bg-status-selected-text focus:bg-white focus:border-status-selected-border focus:border-4 text-black px-5 py-3"
           placeholder="e.g. Push Day"
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor="black"
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"

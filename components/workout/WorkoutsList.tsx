@@ -11,9 +11,7 @@ import { FlatList, RefreshControlProps, Text, View } from "react-native";
 import WorkoutItem from "../home/WorkoutItem";
 
 interface WorkoutsListProps {
-  ListHeaderComponent?: React.ComponentType | React.ReactElement;
   refreshControl?: React.ReactElement<RefreshControlProps>;
-  title?: string;
 }
 
 const keyExtractor = (item: Workout) => String(item.id);
@@ -29,11 +27,7 @@ const ListEmptyComponent = () => (
   </View>
 );
 
-const WorkoutsList: React.FC<WorkoutsListProps> = ({
-  ListHeaderComponent,
-  refreshControl,
-  title = "Workouts",
-}) => {
+const WorkoutsList: React.FC<WorkoutsListProps> = ({ refreshControl }) => {
   const { workoutsList } = useWorkoutsList();
   const [activeDeleteWorkoutId, setActiveDeleteWorkoutId] = useState<
     number | null
@@ -59,30 +53,12 @@ const WorkoutsList: React.FC<WorkoutsListProps> = ({
       renderItem={renderWorkoutItem}
       keyExtractor={keyExtractor}
       className="flex-1"
-      ListHeaderComponent={
-        <>
-          {ListHeaderComponent &&
-            (React.isValidElement(ListHeaderComponent) ? (
-              ListHeaderComponent
-            ) : (
-              <ListHeaderComponent />
-            ))}
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-2xl font-black text-indigo-950">{title}</Text>
-            <View className="rounded-full px-3 py-1">
-              <Text className="text-sm font-semibold text-indigo-700">
-                {workoutsList.length}
-              </Text>
-            </View>
-          </View>
-        </>
-      }
       ListEmptyComponent={ListEmptyComponent}
       refreshControl={refreshControl}
       contentContainerStyle={{
         paddingHorizontal: 20,
-        paddingTop: 16,
-        paddingBottom: 28,
+        paddingTop: 4,
+        paddingBottom: 12,
       }}
       onScrollBeginDrag={() => {
         if (activeDeleteWorkoutId !== null) {
