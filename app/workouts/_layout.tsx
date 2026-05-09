@@ -11,6 +11,7 @@
  */
 
 import { useAuth } from "@/contexts";
+import { COLORS } from "@/utils/theme";
 import { Redirect, Stack } from "expo-router";
 import React from "react";
 import { ActivityIndicator, View } from "react-native";
@@ -25,8 +26,8 @@ export default function WorkoutsLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#EEF2FF]">
-        <ActivityIndicator size="small" color="#6366F1" />
+      <View className="flex-1 items-center justify-center bg-indigo-50 dark:bg-indigo-950">
+        <ActivityIndicator size="small" color={COLORS.primary} />
       </View>
     );
   }
@@ -36,7 +37,7 @@ export default function WorkoutsLayout() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#EEF2FF]">
+    <SafeAreaView className="flex-1 bg-indigo-50 dark:bg-indigo-950">
       <Stack
         screenOptions={{
           headerShown: false, // Hide headers for clean full-screen experience

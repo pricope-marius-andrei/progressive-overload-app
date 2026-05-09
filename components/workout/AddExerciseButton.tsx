@@ -10,8 +10,6 @@ import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 
-const DISABLED_COLOR = "#9ca3af";
-
 const AddExerciseButton: React.FC = () => {
   const { startCreatingExercise, isHistoryMode } = useWorkout();
 
@@ -19,8 +17,8 @@ const AddExerciseButton: React.FC = () => {
     <TouchableOpacity
       className={`rounded-2xl px-4 py-4 mb-4 border ${
         isHistoryMode
-          ? "bg-indigo-100 border-indigo-200"
-          : "bg-white/65 border-white/70"
+          ? "bg-indigo-100 border-indigo-200 dark:bg-indigo-900/40 dark:border-indigo-800"
+          : "bg-white/70 border-white/70 dark:bg-slate-900/70 dark:border-indigo-900/60"
       }`}
       onPress={startCreatingExercise}
       disabled={isHistoryMode}
@@ -35,27 +33,33 @@ const AddExerciseButton: React.FC = () => {
         <View className="flex-row items-center flex-1">
           <View
             className={`h-10 w-10 rounded-full items-center justify-center mr-3 ${
-              isHistoryMode ? "bg-indigo-200" : "bg-indigo-50/90"
+              isHistoryMode
+                ? "bg-indigo-200 dark:bg-indigo-800"
+                : "bg-indigo-50/90 dark:bg-indigo-900/60"
             }`}
           >
             <Ionicons
               name="add"
               size={20}
-              color={isHistoryMode ? DISABLED_COLOR : COLORS.primary}
+              color={isHistoryMode ? COLORS.muted : COLORS.primary}
             />
           </View>
 
           <View className="flex-1">
             <Text
               className={`font-semibold text-base ${
-                isHistoryMode ? "text-indigo-500" : "text-indigo-950"
+                isHistoryMode
+                  ? "text-indigo-500 dark:text-indigo-300"
+                  : "text-indigo-950 dark:text-indigo-50"
               }`}
             >
               {isHistoryMode ? "History mode" : "Add exercise"}
             </Text>
             <Text
               className={`text-sm ${
-                isHistoryMode ? "text-indigo-400" : "text-indigo-700"
+                isHistoryMode
+                  ? "text-indigo-400 dark:text-indigo-300"
+                  : "text-indigo-700 dark:text-indigo-200"
               }`}
             >
               {isHistoryMode
@@ -68,7 +72,7 @@ const AddExerciseButton: React.FC = () => {
         <Ionicons
           name="chevron-forward"
           size={18}
-          color={isHistoryMode ? DISABLED_COLOR : COLORS.primary}
+          color={isHistoryMode ? COLORS.muted : COLORS.primary}
         />
       </View>
     </TouchableOpacity>

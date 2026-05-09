@@ -1,4 +1,5 @@
 import type { TabConfig } from "@/types/tab.types";
+import { COLORS } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Pressable, Text, View } from "react-native";
@@ -10,17 +11,14 @@ interface CustomTabBarProps extends BottomTabBarProps {
   inactiveColor?: string;
 }
 
-const DEFAULT_ACTIVE_COLOR = "#6366f1";
-const DEFAULT_INACTIVE_COLOR = "#9ca3af";
-
 export default function CustomTabBar({
   state,
   descriptors,
   navigation,
   tabConfig = {},
   tabOrder,
-  activeColor = DEFAULT_ACTIVE_COLOR,
-  inactiveColor = DEFAULT_INACTIVE_COLOR,
+  activeColor = COLORS.primary,
+  inactiveColor = COLORS.muted,
 }: CustomTabBarProps) {
   // Sort routes by tabOrder if provided
   const sortedRoutes = tabOrder
@@ -42,73 +40,63 @@ export default function CustomTabBar({
       }}
     >
       <View
-        style={{
-          flexDirection: "row",
-          backgroundColor: "#fff",
-          borderRadius: 30,
-          height: 60,
-          paddingHorizontal: 20,
-          alignItems: "center",
-          elevation: 5,
-          shadowColor: "#000",
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
-        }}
+        className="flex-row items-center rounded-full bg-white dark:bg-slate-900 px-6 h-14 shadow-sm"
+        style={{ elevation: 6 }}
       >
-        {sortedRoutes.map(
-          (route: { key: string; name: string }, index: number) => {
-            const { options } = descriptors[route.key];
-            const isFocused =
-              state.index ===
-              state.routes.findIndex(
-                (r: { key: string }) => r.key === route.key,
-              );
+        {sortedRoutes.map((route: { key: string; name: string }) => {
+          const { options } = descriptors[route.key];
+          const isFocused =
+            state.index ===
+            state.routes.findIndex((r: { key: string }) => r.key === route.key);
 
-            const onPress = () => {
-              const event = navigation.emit({
-                type: "tabPress",
-                target: route.key,
-                canPreventDefault: true,
-              });
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name);
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          const routeConfig = tabConfig[route.name];
+          const iconName = isFocused
+            ? routeConfig?.focused || route.name.toLowerCase()
+            : routeConfig?.unfocused || `${route.name.toLowerCase()}-outline`;
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              className="items-center justify-center mx-5"
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${options.title ?? route.name} tab`}
+              accessibilityState={{ selected: isFocused }}
+              style={({ pressed }) =>
+                pressed
+                  ? { opacity: 0.8, transform: [{ scale: 0.98 }] }
+                  : undefined
               }
-            };
-
-            const routeConfig = tabConfig[route.name];
-            const iconName = isFocused
-              ? routeConfig?.focused || route.name.toLowerCase()
-              : routeConfig?.unfocused || `${route.name.toLowerCase()}-outline`;
-
-            return (
-              <Pressable
-                key={route.key}
-                onPress={onPress}
+            >
+              <Ionicons
+                name={iconName as any}
+                size={24}
+                color={isFocused ? activeColor : inactiveColor}
+              />
+              <Text
+                className="font-black"
                 style={{
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginHorizontal: 20,
+                  fontSize: 12,
+                  color: isFocused ? activeColor : inactiveColor,
                 }}
               >
-                <Ionicons
-                  name={iconName as any}
-                  size={24}
-                  color={isFocused ? activeColor : inactiveColor}
-                />
-                <Text
-                  className="font-black"
-                  style={{
-                    fontSize: 12,
-                    color: isFocused ? activeColor : inactiveColor,
-                  }}
-                >
-                  {options.title ?? route.name}
-                </Text>
-              </Pressable>
-            );
-          },
-        )}
+                {options.title ?? route.name}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );

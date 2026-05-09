@@ -5,7 +5,9 @@
  */
 
 import { useWorkoutsList } from "@/contexts";
+import { COLORS } from "@/utils/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import * as Haptics from "expo-haptics";
 import React, { useCallback, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
@@ -22,17 +24,20 @@ const AddWorkoutForm: React.FC = () => {
 
     await handleSaveNewWorkout(newWorkoutName);
     setNewWorkoutName("");
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   }, [newWorkoutName, handleSaveNewWorkout]);
 
   return (
     <View className="mb-5 gap-3">
-      <Text className="text-2xl font-black">Create workout template</Text>
+      <Text className="text-2xl font-black text-indigo-950 dark:text-indigo-50">
+        Create workout template
+      </Text>
 
       <View className="flex-row items-center gap-3">
         <TextInput
-          className="flex-1 rounded-xl bg-status-selected-text focus:bg-white focus:border-status-selected-border focus:border-4 text-black px-5 py-3"
+          className="flex-1 rounded-xl border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-slate-900/70 px-5 py-3 text-indigo-950 dark:text-indigo-50"
           placeholder="e.g. Push Day"
-          placeholderTextColor="black"
+          placeholderTextColor={COLORS.muted}
           value={newWorkoutName}
           onChangeText={setNewWorkoutName}
           returnKeyType="done"
@@ -40,14 +45,22 @@ const AddWorkoutForm: React.FC = () => {
         />
 
         <Pressable
-          className={`items-center justify-center rounded-xl px-4 py-3 ${isDisabled ? "bg-status-default-bg border-4 border-status-default-border" : "bg-status-selected-bg border-4 border-status-selected-border"}`}
+          className={`h-11 w-11 items-center justify-center rounded-xl border-2 ${isDisabled ? "bg-status-default-bg border-status-default-border" : "bg-status-selected-bg border-status-selected-border"}`}
           disabled={isDisabled}
           onPress={handleSubmit}
+          accessibilityRole="button"
+          accessibilityLabel="Add workout template"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={({ pressed }) =>
+            !isDisabled && pressed
+              ? { opacity: 0.8, transform: [{ scale: 0.98 }] }
+              : undefined
+          }
         >
           <AntDesign
             name="plus"
             size={16}
-            color={isDisabled ? "gray" : "white"}
+            color={isDisabled ? COLORS.muted : "white"}
           />
         </Pressable>
       </View>

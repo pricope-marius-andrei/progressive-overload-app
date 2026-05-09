@@ -6,6 +6,7 @@
 
 import { useWorkout } from "@/contexts/WorkoutContext";
 import { ExerciseSummary } from "@/types/mappers/workout.mapper";
+import { COLORS } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
@@ -83,40 +84,49 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
   };
 
   return (
-    <View className="mb-3 rounded-2xl border border-white/70 bg-white/65 p-4">
+    <View className="mb-3 rounded-2xl border border-white/70 dark:border-indigo-900/60 bg-white/70 dark:bg-slate-900/70 p-4">
       <View className="flex-row justify-between items-center mb-3">
         <TouchableOpacity
           className="flex-1 pr-2"
           onPress={handleToggleExpand}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Toggle ${exercise.name} details`}
         >
           <View className="flex-row items-center justify-between">
             <View className="pr-2 flex-1">
-              <Text className="text-lg font-semibold text-indigo-950">
+              <Text className="text-lg font-semibold text-indigo-950 dark:text-indigo-50">
                 {exercise.name}
               </Text>
-              <Text className="mt-0.5 text-sm text-indigo-700">{setLabel}</Text>
+              <Text className="mt-0.5 text-sm text-indigo-700 dark:text-indigo-200">
+                {setLabel}
+              </Text>
             </View>
             <Ionicons
               name={isExpanded ? "chevron-up" : "chevron-down"}
               size={18}
-              color="#6366F1"
+              color={COLORS.primary}
             />
           </View>
         </TouchableOpacity>
         <View className="flex-row items-center gap-2">
           <TouchableOpacity
-            className={`rounded-xl px-3 py-2 ${
-              isHistoryMode ? "bg-indigo-100" : "bg-indigo-50/90"
+            className={`rounded-xl h-11 px-4 justify-center ${
+              isHistoryMode
+                ? "bg-indigo-100 dark:bg-indigo-900/40"
+                : "bg-indigo-50/90 dark:bg-indigo-900/40"
             }`}
             onPress={handleEditPress}
             disabled={isHistoryMode || isLoadingDetails}
+            accessibilityRole="button"
+            accessibilityLabel={`Edit ${exercise.name}`}
+            accessibilityState={{ disabled: isHistoryMode || isLoadingDetails }}
           >
             <View className="flex-row items-center">
               <Ionicons
                 name="pencil"
                 size={16}
-                color={isHistoryMode ? "#9ca3af" : "#6366f1"}
+                color={isHistoryMode ? COLORS.muted : COLORS.primary}
               />
               <Text
                 className={`font-medium ml-1 ${
@@ -130,15 +140,22 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
             </View>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`rounded-xl px-3 py-2 ${
-              isHistoryMode ? "bg-indigo-100" : "bg-indigo-50/90"
+            className={`rounded-xl h-11 px-4 justify-center ${
+              isHistoryMode
+                ? "bg-indigo-100 dark:bg-indigo-900/40"
+                : "bg-indigo-50/90 dark:bg-indigo-900/40"
             }`}
             onPress={handleConfirmRemoveExercise}
             disabled={isHistoryMode}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${exercise.name}`}
+            accessibilityState={{ disabled: isHistoryMode }}
           >
             <Text
               className={`font-medium ${
-                isHistoryMode ? "text-indigo-300" : "text-indigo-700"
+                isHistoryMode
+                  ? "text-indigo-300"
+                  : "text-indigo-700 dark:text-indigo-200"
               }`}
             >
               Remove
@@ -150,7 +167,7 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
       {isExpanded && (
         <>
           {isLoadingDetails && !detailedExercise && (
-            <Text className="mb-2 italic text-indigo-600">
+            <Text className="mb-2 italic text-indigo-600 dark:text-indigo-200">
               Loading details...
             </Text>
           )}
@@ -158,10 +175,12 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           {sets.map((set, index) => (
             <View
               key={set.id}
-              className="mb-2 flex-row items-center justify-between rounded-xl bg-white/80 px-2 py-2.5"
+              className="mb-2 flex-row items-center justify-between rounded-xl bg-white/80 dark:bg-slate-900/60 px-2 py-2.5"
             >
-              <Text className="text-indigo-700">Set {index + 1}</Text>
-              <Text className="font-medium text-indigo-900">
+              <Text className="text-indigo-700 dark:text-indigo-200">
+                Set {index + 1}
+              </Text>
+              <Text className="font-medium text-indigo-900 dark:text-indigo-50">
                 {set.reps} reps × {set.weight} kg
               </Text>
             </View>
@@ -177,13 +196,15 @@ const ExerciseItem: React.FC<ExerciseItemProps> = ({ exercise }) => {
           )}
 
           {!isLoadingDetails && sets.length === 0 && (
-            <Text className="italic text-indigo-600">No sets added</Text>
+            <Text className="italic text-indigo-600 dark:text-indigo-200">
+              No sets added
+            </Text>
           )}
         </>
       )}
 
       {!isExpanded && (
-        <Text className="text-sm italic text-indigo-600">
+        <Text className="text-sm italic text-indigo-600 dark:text-indigo-200">
           Collapsed — tap the header to expand.
         </Text>
       )}

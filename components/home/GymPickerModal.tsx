@@ -1,42 +1,43 @@
 import { findNearbyGyms, NearbyGym } from "@/contexts/home/gym-search.service";
 import {
-  CustomGymSection,
-  MapSection,
-  MyGymsSection,
-  NearbyGymsSection,
+    CustomGymSection,
+    MapSection,
+    MyGymsSection,
+    NearbyGymsSection,
 } from "./gym-picker/index";
 import {
-  dedupeGyms,
-  DiscoverableGym,
-  FocusedGym,
-  NEARBY_GYM_SEARCH_RADIUS_METERS,
+    dedupeGyms,
+    DiscoverableGym,
+    FocusedGym,
+    NEARBY_GYM_SEARCH_RADIUS_METERS,
 } from "./gym-picker/types";
 
 import {
-  deleteKnownGymPlace,
-  fetchMyGyms,
-  fetchNearbyKnownGyms,
-  SavedGymPlace,
-  saveKnownGymPlace,
+    deleteKnownGymPlace,
+    fetchMyGyms,
+    fetchNearbyKnownGyms,
+    SavedGymPlace,
+    saveKnownGymPlace,
 } from "@/contexts/home/home.repository";
 import { getCurrentDeviceCoordinates } from "@/utils/location";
 import type { CameraRef } from "@maplibre/maplibre-react-native";
+import * as Haptics from "expo-haptics";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  LayoutChangeEvent,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    LayoutChangeEvent,
+    Modal,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 
 type GymPickerModalProps = {
@@ -255,6 +256,9 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
           setSelectedMapCoordinates(null);
         }
 
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
         Alert.alert("Saved", input.successMessage);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -286,6 +290,9 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
         }
 
         await loadNearbyGyms();
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Error adding gym to list:", message);
@@ -381,6 +388,9 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
                 }
 
                 await loadNearbyGyms();
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success,
+                );
               } catch (error: unknown) {
                 const message =
                   error instanceof Error ? error.message : String(error);
@@ -412,28 +422,37 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={handleCloseModal}
     >
-      <View className="flex-1 bg-[#EEF2FF]">
-        <View className="border-b border-white/70 bg-white/65 px-5 pb-4 pt-6">
+      <View className="flex-1 bg-indigo-50 dark:bg-indigo-950">
+        <View className="border-b border-white/70 dark:border-indigo-900/60 bg-white/70 dark:bg-slate-900/70 px-5 pb-4 pt-6">
           <View className="flex-row items-start justify-between">
             <View>
-              <Text className="text-2xl font-semibold text-indigo-950">
+              <Text className="text-2xl font-semibold text-indigo-950 dark:text-indigo-50">
                 Nearby Gyms
               </Text>
-              <Text className="mt-1 text-xs text-indigo-700">
+              <Text className="mt-1 text-xs text-indigo-700 dark:text-indigo-200">
                 {savedGymsCount} saved • {nearbyGymsCount} nearby
               </Text>
             </View>
 
             <Pressable
               onPress={handleCloseModal}
-              className="rounded-full border border-indigo-200 bg-indigo-50/80 px-4 py-2"
+              className="rounded-full border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-900/40 px-4 py-2"
+              accessibilityRole="button"
+              accessibilityLabel="Close gym picker"
+              style={({ pressed }) =>
+                pressed
+                  ? { opacity: 0.8, transform: [{ scale: 0.98 }] }
+                  : undefined
+              }
             >
-              <Text className="font-semibold text-indigo-700">Close</Text>
+              <Text className="font-semibold text-indigo-700 dark:text-indigo-200">
+                Close
+              </Text>
             </Pressable>
           </View>
 
-          <View className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2">
-            <Text className="text-xs text-indigo-700">
+          <View className="mt-3 rounded-xl border border-indigo-100 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/40 px-3 py-2">
+            <Text className="text-xs text-indigo-700 dark:text-indigo-200">
               Explore gyms on the map, save favorites, or pin your own location.
             </Text>
           </View>
@@ -445,12 +464,12 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
           contentContainerStyle={{ padding: 16, paddingBottom: 44 }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="mb-4 rounded-3xl border border-white/70 bg-white/65 p-4">
+          <View className="mb-4 rounded-3xl border border-white/70 dark:border-indigo-900/60 bg-white/70 dark:bg-slate-900/70 p-4">
             <Text className="text-[11px] font-semibold uppercase tracking-[1.2px] text-indigo-500">
               Discovery Map
             </Text>
 
-            <Text className="mb-3 mt-1 text-sm text-indigo-700">
+            <Text className="mb-3 mt-1 text-sm text-indigo-700 dark:text-indigo-200">
               Tap a gym card to focus it, or long-press the map to drop a custom
               pin.
             </Text>
@@ -480,11 +499,18 @@ const GymPickerModal: React.FC<GymPickerModalProps> = ({
             }}
           />
 
-          <View className="mb-4 rounded-2xl border border-white/70 bg-white/65 p-3">
+          <View className="mb-4 rounded-2xl border border-white/70 dark:border-indigo-900/60 bg-white/70 dark:bg-slate-900/70 p-3">
             <Pressable
-              className={`items-center justify-center rounded-xl py-3 ${isLoading ? "bg-indigo-300" : "bg-indigo-500"}`}
+              className={`items-center justify-center rounded-xl py-3 ${isLoading ? "bg-indigo-300" : "bg-indigo-600"}`}
               onPress={loadNearbyGyms}
               disabled={isLoading || isSaving}
+              accessibilityRole="button"
+              accessibilityLabel="Refresh nearby gyms"
+              style={({ pressed }) =>
+                !isLoading && pressed
+                  ? { opacity: 0.85, transform: [{ scale: 0.99 }] }
+                  : undefined
+              }
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="white" />

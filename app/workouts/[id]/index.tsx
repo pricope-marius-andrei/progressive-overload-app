@@ -17,7 +17,7 @@ import { View } from "react-native";
 
 const DayWorkoutScreen: React.FC = () => {
   return (
-    <View className="flex-1 bg-[#EEF2FF] px-5 pt-4 pb-2">
+    <View className="flex-1 bg-indigo-50 dark:bg-indigo-950 px-5 pt-4 pb-2">
       <View className="flex-1">
         <WorkoutHeader />
         <AddExerciseButton />

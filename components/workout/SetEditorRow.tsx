@@ -1,4 +1,5 @@
 import { ExerciseSet } from "@/types/mappers/workout.mapper";
+import { COLORS } from "@/utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
@@ -36,16 +37,16 @@ const SetEditorRow: React.FC<SetEditorRowProps> = ({
   };
 
   return (
-    <View className="mb-2 flex-row items-center justify-between rounded-xl border border-indigo-100 bg-white/80 px-2 py-3">
+    <View className="mb-2 flex-row items-center justify-between rounded-xl border border-indigo-100 dark:border-indigo-800 bg-white/80 dark:bg-slate-900/60 px-2 py-3">
       <View className="flex-row items-center flex-1">
-        <Text className="w-12 font-medium text-indigo-700">
+        <Text className="w-12 font-medium text-indigo-700 dark:text-indigo-200">
           Set {index + 1}
         </Text>
 
         <View className="flex-1 mx-2">
           <Text className="mb-1 text-xs text-indigo-500">Reps</Text>
           <TextInput
-            className="rounded-xl border border-indigo-100 bg-white px-3 py-2 text-center text-indigo-950"
+            className="rounded-xl border border-indigo-100 dark:border-indigo-800 bg-white dark:bg-slate-900/60 px-3 py-2 text-center text-indigo-950 dark:text-indigo-50"
             value={set.reps.toString()}
             onChangeText={(text) => {
               const reps = parseInt(text) || 0;
@@ -53,14 +54,14 @@ const SetEditorRow: React.FC<SetEditorRowProps> = ({
             }}
             keyboardType="numeric"
             placeholder="10"
-            placeholderTextColor="#6366F1"
+            placeholderTextColor={COLORS.muted}
           />
         </View>
 
         <View className="flex-1 mx-2">
           <Text className="mb-1 text-xs text-indigo-500">Weight (kg)</Text>
           <TextInput
-            className="rounded-xl border border-indigo-100 bg-white px-3 py-2 text-center text-indigo-950"
+            className="rounded-xl border border-indigo-100 dark:border-indigo-800 bg-white dark:bg-slate-900/60 px-3 py-2 text-center text-indigo-950 dark:text-indigo-50"
             value={weightInput}
             onChangeText={(text) => {
               const normalizedText = text.replace(",", ".");
@@ -88,16 +89,18 @@ const SetEditorRow: React.FC<SetEditorRowProps> = ({
             }}
             keyboardType="decimal-pad"
             placeholder="50"
-            placeholderTextColor="#6366F1"
+            placeholderTextColor={COLORS.muted}
           />
         </View>
       </View>
 
       <TouchableOpacity
-        className="rounded-lg bg-indigo-50/90 p-2"
+        className="rounded-lg bg-indigo-50/90 dark:bg-indigo-900/40 h-11 w-11 items-center justify-center"
         onPress={handleConfirmRemove}
+        accessibilityRole="button"
+        accessibilityLabel={`Remove set ${index + 1}`}
       >
-        <Ionicons name="trash-outline" size={20} color="#4F46E5" />
+        <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
       </TouchableOpacity>
     </View>
   );

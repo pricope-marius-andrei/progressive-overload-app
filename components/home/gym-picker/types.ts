@@ -1,3 +1,5 @@
+import { COLORS } from "@/utils/theme";
+
 export type Coordinates = {
   latitude: number;
   longitude: number;
@@ -21,7 +23,7 @@ export type FocusedGym = {
 };
 
 export const NEARBY_GYM_SEARCH_RADIUS_METERS = 3000;
-export const FOCUSED_PIN_COLOR = "#6366f1";
+export const FOCUSED_PIN_COLOR = COLORS.mapPinFocused;
 
 export function dedupeGyms(gyms: DiscoverableGym[]): DiscoverableGym[] {
   const seen = new Set<string>();

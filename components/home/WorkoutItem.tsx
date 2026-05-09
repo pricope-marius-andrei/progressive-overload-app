@@ -6,7 +6,9 @@
 
 import { useWorkoutsList } from "@/contexts";
 import { Workout } from "@/types/mappers/workout.mapper";
+import { COLORS } from "@/utils/theme";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import * as Haptics from "expo-haptics";
 import React from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
@@ -49,7 +51,12 @@ function WorkoutItem({
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            void deleteWorkout(workout);
+            void (async () => {
+              await deleteWorkout(workout);
+              await Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
+            })();
           },
         },
       ],
@@ -58,7 +65,10 @@ function WorkoutItem({
 
   return (
     <Pressable
-      onLongPress={onEnterDeleteMode}
+      onLongPress={() => {
+        onEnterDeleteMode();
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }}
       delayLongPress={250}
       onPress={() => {
         if (hasAnyDeleteModeActive && !isDeleteMode) {
@@ -73,11 +83,15 @@ function WorkoutItem({
 
         openWorkout(workout);
       }}
-      className={`relative mb-3 rounded-2xl px-10 py-4 ${
+      className={`relative mb-3 rounded-2xl px-6 py-4 border-2 shadow-sm ${
         isDeleteMode
-          ? "border-dashed border-4 border-red-500 bg-red-100 shadow-lg shadow-red-500"
-          : "bg-white border-4 border-solid border-status-selected-text shadow-lg shadow-status-selected-border"
+          ? "border-dashed border-red-500 bg-red-100 dark:bg-red-950/40 dark:border-red-400"
+          : "bg-white dark:bg-slate-900/80 border-indigo-200 dark:border-indigo-700"
       }`}
+      style={({ pressed }) => [
+        { elevation: 2 },
+        pressed ? { opacity: 0.9, transform: [{ scale: 0.99 }] } : null,
+      ]}
       accessibilityRole="button"
       accessibilityLabel={`Open workout ${workout.name}`}
       accessibilityHint={
@@ -87,14 +101,20 @@ function WorkoutItem({
       }
     >
       {isDeleteMode ? (
-        <View className="absolute top-0 right-0 p-5">
+        <View className="absolute top-0 right-0 p-4">
           <Pressable
-            className="rounded-2xl bg-red-200 p-2"
+            className="h-11 w-11 items-center justify-center rounded-2xl bg-red-200 dark:bg-red-900/40"
             onPress={handleConfirmDeleteWorkout}
             accessibilityRole="button"
             accessibilityLabel={`Delete workout ${workout.name}`}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={({ pressed }) =>
+              pressed
+                ? { opacity: 0.8, transform: [{ scale: 0.98 }] }
+                : undefined
+            }
           >
-            <AntDesign name="delete" size={18} color="#B91C1C" />
+            <AntDesign name="delete" size={18} color={COLORS.danger} />
           </Pressable>
         </View>
       ) : null}
@@ -102,22 +122,38 @@ function WorkoutItem({
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
           <Text
-            className={`text-2xl font-black ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
+            className={`text-2xl font-black ${
+              isDeleteMode
+                ? "text-red-700 dark:text-red-300"
+                : "text-indigo-950 dark:text-indigo-50"
+            }`}
           >
             {workout.name}
           </Text>
           <Text
-            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
+            className={`text-xl font-bold ${
+              isDeleteMode
+                ? "text-red-700 dark:text-red-300"
+                : "text-indigo-800 dark:text-indigo-200"
+            }`}
           >
             Number of exercises: {workout.exercises.length}
           </Text>
           <Text
-            className={`text-xl font-bold ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
+            className={`text-xl font-bold ${
+              isDeleteMode
+                ? "text-red-700 dark:text-red-300"
+                : "text-indigo-800 dark:text-indigo-200"
+            }`}
           >
             Last time worked out: {"Never"}
           </Text>
           <Text
-            className={`text-xl ${isDeleteMode ? "text-red-700" : "text-status-selected-border"}`}
+            className={`text-xl ${
+              isDeleteMode
+                ? "text-red-700 dark:text-red-300"
+                : "text-indigo-700 dark:text-indigo-200"
+            }`}
           >
             {isDeleteMode
               ? "Delete mode active"

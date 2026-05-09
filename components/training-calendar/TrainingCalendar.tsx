@@ -76,7 +76,11 @@ function TrainingCalendar() {
     : 7;
 
   if (Number.isNaN(today.getTime())) {
-    return <Text className="text-red-500">Invalid date range.</Text>;
+    return (
+      <Text className="text-red-600 dark:text-red-300">
+        Invalid date range.
+      </Text>
+    );
   }
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -154,7 +158,7 @@ function TrainingCalendar() {
 
   return (
     <View onLayout={handleLayout} className="flex-1">
-      <Text className="mb-4 ml-2 text-lg font-bold">
+      <Text className="mb-4 ml-2 text-lg font-bold text-indigo-950 dark:text-indigo-50">
         {getPageTitle(currentPageIndex)}
       </Text>
       <FlatList
